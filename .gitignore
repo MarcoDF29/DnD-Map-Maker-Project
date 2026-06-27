@@ -12,3 +12,7 @@ desktop.ini
 
 # Logs
 *.log
+
+# Local verification artifacts
+output/
+.playwright-cli/

@@ -4,36 +4,36 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("mapCanvas");
     const ctx = canvas.getContext("2d");
     const viewport = document.getElementById("canvasViewport");
-    
+
     const btnUndo = document.getElementById("btnUndo");
     const btnRedo = document.getElementById("btnRedo");
     const zoomDisplay = document.getElementById("zoomDisplay");
     const btnZoomIn = document.getElementById("btnZoomIn");
     const btnZoomOut = document.getElementById("btnZoomOut");
     const btnZoomReset = document.getElementById("btnZoomReset");
-    
+
     const fileInput = document.getElementById("fileInput");
     const btnSaveJson = document.getElementById("btnSaveJson");
     const btnExportPng = document.getElementById("btnExportPng");
     const btnClearMap = document.getElementById("btnClearMap");
-    
+
     const toolBtns = document.querySelectorAll(".tool-btn");
     const optionGroups = document.querySelectorAll(".options-group");
-    
+
     // Header VTT tools
     const mapTemplateSelect = document.getElementById("mapTemplate");
     const mapModeSelect = document.getElementById("mapMode");
-    
+
     // Terrain tools
     const terrainOptions = document.querySelectorAll(".terrain-option");
     const btnBrushPaint = document.getElementById("btnBrushPaint");
     const btnBrushFill = document.getElementById("btnBrushFill");
-    
+
     // Wall tools
     const wallWidthInput = document.getElementById("wallWidth");
     const wallWidthVal = document.getElementById("wallWidthVal");
     const wallColorInput = document.getElementById("wallColor");
-    
+
     // Stamp tools
     const tabBtns = document.querySelectorAll(".tab-btn");
     const tabContents = document.querySelectorAll(".tab-content");
@@ -45,32 +45,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const stampRotationVal = document.getElementById("stampRotationVal");
     const btnDeleteStamp = document.getElementById("btnDeleteStamp");
     const btnDuplicateStamp = document.getElementById("btnDuplicateStamp");
-    
+
     // Token / D&D options
     const tokenTypeSelect = document.getElementById("tokenType");
     const visionRadiusSetting = document.getElementById("visionRadiusSetting");
     const tokenVisionInput = document.getElementById("tokenVision");
     const tokenVisionVal = document.getElementById("tokenVisionVal");
-    
+
     // Fog tools
     const btnFogAdd = document.getElementById("btnFogAdd");
     const btnFogRemove = document.getElementById("btnFogRemove");
     const btnFogAll = document.getElementById("btnFogAll");
     const btnFogClear = document.getElementById("btnFogClear");
     const chkDynamicFog = document.getElementById("chkDynamicFog");
-    
+
     // Grid settings
     const gridColsInput = document.getElementById("gridCols");
     const gridRowsInput = document.getElementById("gridRows");
     const btnApplyGridSize = document.getElementById("btnApplyGridSize");
     const chkShowGrid = document.getElementById("chkShowGrid");
-    
+
     // Help Modal
     const btnOpenHelp = document.getElementById("btnOpenHelp");
     const helpModal = document.getElementById("helpModal");
     const btnCloseHelp = document.getElementById("btnCloseHelp");
     const btnCloseHelpOk = document.getElementById("btnCloseHelpOk");
-    
+
     // Dice Roller
     const diceBtns = document.querySelectorAll(".dice-btn");
     const diceConsole = document.getElementById("diceConsole");
@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const tokenHpMaxInput = document.getElementById("tokenHpMax");
     const conditionChks = document.querySelectorAll(".condition-chk");
     const btnAddToInitiative = document.getElementById("btnAddToInitiative");
-    
+
     const btnInitNext = document.getElementById("btnInitNext");
     const btnInitClear = document.getElementById("btnInitClear");
     const initiativeList = document.getElementById("initiativeList");
@@ -146,6 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let dysonMode = false; // Dyson Logos B&W classic cartography style
     let activeStamp = null;
     let activeStampImage = null;
+    let activeCustomAssetId = null;
     let activeStampName = "";
     let activeStampDescription = "";
     let selectedStampId = null;
@@ -159,7 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let startX = 0;
     let startY = 0;
     let panClickStart = null; // tracks mousedown position to distinguish click vs drag
-    
+
     // Interaction drawing states
     let isDrawing = false;
     let wallStart = null;
@@ -174,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- TEMPLATE DATA ---
     const charMap = { s: 'stone', d: 'wood', g: 'grass', w: 'water', l: 'lava', a: 'abyss' };
-    
+
     function decodeTerrain(str, cols, rows, terrainMap = charMap) {
         const decoded = Array(cols * rows).fill("stone");
         const chars = str.replace(/\s+/g, ''); // remove newlines/whitespace
@@ -636,7 +637,7 @@ document.addEventListener("DOMContentLoaded", () => {
         syncUIForMapMode();
         saveHistory();
         draw();
-        
+
         window.addEventListener("resize", handleWindowResize);
         setupEventListeners();
     }
@@ -662,7 +663,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const vwHeight = viewport.clientHeight;
         const mapWidth = canvas.width * zoom;
         const mapHeight = canvas.height * zoom;
-        
+
         panX = (vwWidth - mapWidth) / 2;
         panY = (vwHeight - mapHeight) / 2;
         updateTransform();
@@ -694,12 +695,12 @@ document.addEventListener("DOMContentLoaded", () => {
             travelScaleUnit: state.travelScaleUnit,
             travelMethod: state.travelMethod
         });
-        
+
         if (undoStack.length > 0 && undoStack[undoStack.length - 1] === serialized) return;
-        
+
         undoStack.push(serialized);
         redoStack = [];
-        
+
         if (undoStack.length > 30) {
             undoStack.shift();
         }
@@ -710,10 +711,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (undoStack.length > 1) {
             const current = undoStack.pop();
             redoStack.push(current);
-            
+
             const previous = undoStack[undoStack.length - 1];
             restoreState(JSON.parse(previous));
-            
+
             draw();
             updateHistoryButtons();
         }
@@ -723,9 +724,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (redoStack.length > 0) {
             const next = redoStack.pop();
             undoStack.push(next);
-            
+
             restoreState(JSON.parse(next));
-            
+
             draw();
             updateHistoryButtons();
         }
@@ -734,7 +735,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function restoreState(parsed) {
         state.cols = parsed.cols;
         state.rows = parsed.rows;
-        
+
         // Backward compatibility: map strings to objects
         if (parsed.terrain) {
             state.terrain = parsed.terrain.map(cell => {
@@ -746,7 +747,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             state.terrain = [];
         }
-        
+
         state.walls = parsed.walls;
         state.stamps = parsed.stamps;
         state.fog = parsed.fog;
@@ -758,11 +759,11 @@ document.addEventListener("DOMContentLoaded", () => {
         state.bgOpacity = parsed.bgOpacity !== undefined ? parsed.bgOpacity : 0.8;
         state.showBg = parsed.showBg !== undefined ? parsed.showBg : false;
         state.weather = parsed.weather || "";
-        
+
         state.travelScaleValue = parsed.travelScaleValue !== undefined ? parsed.travelScaleValue : 10;
         state.travelScaleUnit = parsed.travelScaleUnit !== undefined ? parsed.travelScaleUnit : "millas";
         state.travelMethod = parsed.travelMethod !== undefined ? parsed.travelMethod : "foot";
-        
+
         // Sync UI inputs
         const chkShowBg = document.getElementById("chkShowBg");
         const bgOpacity = document.getElementById("bgOpacity");
@@ -771,7 +772,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const bgY = document.getElementById("bgY");
         const bgTemplateSelect = document.getElementById("bgTemplateSelect");
         const weatherSelect = document.getElementById("weatherSelect");
-        
+
         if (chkShowBg) chkShowBg.checked = state.showBg;
         if (bgOpacity) {
             bgOpacity.value = state.bgOpacity;
@@ -801,23 +802,25 @@ document.addEventListener("DOMContentLoaded", () => {
             weatherSelect.value = state.weather;
             updateWeatherSystem();
         }
-        
+
         if (travelScaleValueInput) travelScaleValueInput.value = state.travelScaleValue;
         if (travelScaleUnitSelect) travelScaleUnitSelect.value = state.travelScaleUnit;
         if (travelMethodSelect) travelMethodSelect.value = state.travelMethod;
-        
+
         if (selectedStampId) {
             const stillExists = state.stamps.some(s => s.id === selectedStampId);
             if (!stillExists) {
                 selectedStampId = null;
             }
         }
-        
+
         syncUIForMapMode();
-        
+
         resizeCanvas();
         updateTransform();
         drawInitiativeList();
+
+        restoreCustomAssets(state.stamps).then(() => draw());
     }
 
     function updateHistoryButtons() {
@@ -910,7 +913,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function revealFogAroundTokens() {
         if (!chkDynamicFog.checked) return;
-        
+
         let hasHeros = false;
         state.stamps.forEach(s => {
             if (s.isHero) {
@@ -960,11 +963,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const hex = getClosestHex(x, y);
         const center = getHexCenter(hex.col, hex.row);
         const radius = state.cellSize / 2;
-        
+
         let minD = Infinity;
         let bestX = x;
         let bestY = y;
-        
+
         for (let i = 0; i < 6; i++) {
             const angle = (Math.PI / 180) * (60 * i - 30);
             const vx = center.x + radius * Math.cos(angle);
@@ -981,7 +984,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function getTokenCanvasPos(s) {
         const size = state.cellSize;
-        
+
         if (isHexMode()) {
             if (s.freePosition) {
                 return { x: s.x * size, y: s.y * size };
@@ -1017,15 +1020,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const radius = state.cellSize / 2;
         const spacingX = radius * Math.sqrt(3);
         const spacingY = radius * 1.5;
-        
+
         // Estimate row and col roughly
         let estRow = Math.round((y - radius) / spacingY);
         let estCol = Math.round((x - spacingX/2) / spacingX);
-        
+
         let minDist = Infinity;
         let bestCol = 0;
         let bestRow = 0;
-        
+
         // Check a 5x5 window around the estimate
         for (let r = Math.max(0, estRow - 2); r <= Math.min(state.rows - 1, estRow + 2); r++) {
             for (let c = Math.max(0, estCol - 2); c <= Math.min(state.cols - 1, estCol + 2); c++) {
@@ -1065,7 +1068,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function drawBiomeDecoration(targetCtx, type, variation, cx, cy, radius) {
         targetCtx.save();
         targetCtx.translate(cx, cy);
-        
+
         if (type === "plains") {
             // Llanuras (Hierba / Flores / Arbusto)
             if (variation === 0) {
@@ -1084,7 +1087,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.beginPath();
                 targetCtx.moveTo(-1, 4); targetCtx.lineTo(0, -1);
                 targetCtx.stroke();
-                
+
                 targetCtx.fillStyle = "#ef4444"; // red dot
                 targetCtx.beginPath(); targetCtx.arc(-4, 0, 1.8, 0, Math.PI * 2); targetCtx.fill();
                 targetCtx.fillStyle = "#eab308"; // yellow dot
@@ -1112,7 +1115,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.moveTo(5, 1); targetCtx.lineTo(5, 6);
                 targetCtx.moveTo(0, -4); targetCtx.lineTo(0, 1);
                 targetCtx.stroke();
-                
+
                 targetCtx.fillStyle = "#15803d";
                 targetCtx.strokeStyle = "rgba(0,0,0,0.2)";
                 targetCtx.lineWidth = 1;
@@ -1169,7 +1172,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.closePath();
                 targetCtx.fill();
                 targetCtx.stroke();
-                
+
                 targetCtx.beginPath();
                 targetCtx.moveTo(0, -12);
                 targetCtx.lineTo(-1, 8);
@@ -1186,7 +1189,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     targetCtx.closePath();
                     targetCtx.fill();
                     targetCtx.stroke();
-                    
+
                     targetCtx.fillStyle = "#f8fafc";
                     targetCtx.beginPath();
                     targetCtx.moveTo(tx, ty - h);
@@ -1211,7 +1214,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.closePath();
                 targetCtx.fill();
                 targetCtx.stroke();
-                
+
                 targetCtx.strokeStyle = "#ef4444"; // red lava crack
                 targetCtx.lineWidth = 1.2;
                 targetCtx.beginPath();
@@ -1256,7 +1259,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.beginPath();
                 targetCtx.ellipse(0, 3, 9, 3.5, 0, 0, Math.PI * 2);
                 targetCtx.fill();
-                
+
                 targetCtx.strokeStyle = "#166534";
                 targetCtx.lineWidth = 1.2;
                 targetCtx.beginPath();
@@ -1299,13 +1302,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.beginPath();
                 targetCtx.ellipse(-1, -1, 4.5, 2.5, Math.PI / 6, 0, Math.PI * 2);
                 targetCtx.fill();
-                
+
                 targetCtx.strokeStyle = "#78350f"; // palm trunk
                 targetCtx.lineWidth = 1.2;
                 targetCtx.beginPath();
                 targetCtx.moveTo(-1, 1); targetCtx.quadraticCurveTo(-3, -1, -3, -4);
                 targetCtx.stroke();
-                
+
                 targetCtx.strokeStyle = "#16a34a"; // palm leaves
                 targetCtx.lineWidth = 0.8;
                 targetCtx.beginPath();
@@ -1524,7 +1527,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- RENDERING CANVAS ENGINE ---
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         // 0. Draw Background Image Layer (if enabled)
         if (state.bgImage && state.showBg) {
             if (cachedBgSrc !== state.bgImage) {
@@ -1535,26 +1538,26 @@ document.addEventListener("DOMContentLoaded", () => {
                     draw();
                 };
             }
-            
+
             if (cachedBgImg && cachedBgImg.complete && cachedBgImg.naturalWidth !== 0) {
                 ctx.save();
                 ctx.globalAlpha = state.bgOpacity !== undefined ? state.bgOpacity : 0.8;
                 ctx.drawImage(
-                    cachedBgImg, 
-                    state.bgX || 0, 
-                    state.bgY || 0, 
-                    cachedBgImg.width * (state.bgScale || 1.0), 
+                    cachedBgImg,
+                    state.bgX || 0,
+                    state.bgY || 0,
+                    cachedBgImg.width * (state.bgScale || 1.0),
                     cachedBgImg.height * (state.bgScale || 1.0)
                 );
                 ctx.restore();
             }
         }
-        
+
         // 1. Draw Terrain Layer (if opacity is less than 1.0 or showBg is false)
         if (!state.showBg || !state.bgImage || state.bgOpacity < 1.0) {
             drawTerrain(ctx);
         }
-        
+
         // 1.5 Dyson Logos overlay (B&W classic cartography)
         if (dysonMode) {
             drawDysonOverlay(ctx);
@@ -1564,21 +1567,21 @@ document.addEventListener("DOMContentLoaded", () => {
         if (chkShowGrid.checked) {
             drawGridLines(ctx);
         }
-        
+
         // 3. Draw Walls
         drawWalls(ctx);
-        
+
         // 4. Draw Stamps (Fichas / Objetos)
         drawStamps(ctx);
-        
+
         // 4.5. Draw Weather effects (if active)
         if (state.weather && weatherSystem) {
             weatherSystem.draw(ctx);
         }
-        
+
         // 5. Draw Fog of War Layer
         drawFog(ctx);
-        
+
         // 6. Draw Previews & UI Guides (e.g. wall draft, brush hover)
         drawUIPreviews(ctx);
     }
@@ -1671,25 +1674,25 @@ document.addEventListener("DOMContentLoaded", () => {
     function drawTerrain(targetCtx = ctx) {
         const size = state.cellSize;
         const mode = mapModeSelect?.value || "combat";
-        
+
         if (mode === "hex" || mode === "region") {
             const radius = size / 2;
             const spacingX = radius * Math.sqrt(3);
             const spacingY = radius * 1.5;
-            
+
             for (let r = 0; r < state.rows; r++) {
                 for (let c = 0; c < state.cols; c++) {
                     const idx = r * state.cols + c;
                     const cell = state.terrain[idx];
                     const type = (cell && typeof cell === "object") ? cell.type : cell;
                     const variation = (cell && typeof cell === "object") ? cell.variation : 0;
-                    
+
                     const cx = c * spacingX + (r % 2) * (spacingX / 2) + spacingX / 2;
                     const cy = r * spacingY + radius;
-                    
+
                     let fillStyle = "#363943";
                     let strokeStyle = (mode === "region") ? "rgba(0, 0, 0, 0.04)" : "rgba(0, 0, 0, 0.15)";
-                    
+
                     if (mode === "region") {
                         switch (type) {
                             case "plains":   fillStyle = "#9cd37b"; break;
@@ -1718,10 +1721,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             default: fillStyle = "#363943"; break;
                         }
                     }
-                    
+
                     // Use radius + 0.5 to prevent pixel rendering gaps between cells
                     drawHexCell(targetCtx, cx, cy, radius + 0.5, fillStyle, strokeStyle, 1);
-                    
+
                     if (mode === "region") {
                         drawBiomeDecoration(targetCtx, type, variation, cx, cy, radius);
                     } else {
@@ -1782,7 +1785,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const type = (cell && typeof cell === "object") ? cell.type : cell;
                     const x = c * size;
                     const y = r * size;
-                    
+
                     switch (type) {
                         case "stone":
                             targetCtx.fillStyle = "#363943";
@@ -1796,7 +1799,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             targetCtx.moveTo(x + size - 15, y + size - 8); targetCtx.lineTo(x + size - 5, y + size - 5);
                             targetCtx.stroke();
                             break;
-                            
+
                         case "wood":
                             targetCtx.fillStyle = "#6d3e1d";
                             targetCtx.fillRect(x, y, size, size);
@@ -1806,21 +1809,21 @@ document.addEventListener("DOMContentLoaded", () => {
                             targetCtx.moveTo(x, y + size/3); targetCtx.lineTo(x + size, y + size/3);
                             targetCtx.moveTo(x, y + 2*size/3); targetCtx.lineTo(x + size, y + 2*size/3);
                             targetCtx.stroke();
-                            
+
                             targetCtx.beginPath();
                             targetCtx.moveTo(x + size/2, y); targetCtx.lineTo(x + size/2, y + size/3);
                             targetCtx.moveTo(x + size/4, y + size/3); targetCtx.lineTo(x + size/4, y + 2*size/3);
                             targetCtx.moveTo(x + 3*size/4, y + 2*size/3); targetCtx.lineTo(x + 3*size/4, y + size);
                             targetCtx.stroke();
                             break;
-                            
+
                         case "grass":
                             targetCtx.fillStyle = "#24502f";
                             targetCtx.fillRect(x, y, size, size);
                             targetCtx.strokeStyle = "#1b3c23";
                             targetCtx.lineWidth = 1;
                             targetCtx.strokeRect(x, y, size, size);
-                            
+
                             targetCtx.strokeStyle = "#2f633b";
                             targetCtx.beginPath();
                             targetCtx.moveTo(x + 12, y + size/2); targetCtx.lineTo(x + 15, y + size/2 - 8);
@@ -1828,41 +1831,41 @@ document.addEventListener("DOMContentLoaded", () => {
                             targetCtx.moveTo(x + size - 18, y + 15); targetCtx.lineTo(x + size - 15, y + 7);
                             targetCtx.stroke();
                             break;
-                            
+
                         case "water":
                             targetCtx.fillStyle = "#152e70";
                             targetCtx.fillRect(x, y, size, size);
-                            
+
                             targetCtx.strokeStyle = "#2144a0";
                             targetCtx.lineWidth = 1.5;
                             targetCtx.lineCap = "round";
                             targetCtx.beginPath();
-                            targetCtx.moveTo(x + size/4, y + size/2); 
+                            targetCtx.moveTo(x + size/4, y + size/2);
                             targetCtx.quadraticCurveTo(x + size/2, y + size/2 - 3, x + 3*size/4, y + size/2);
-                            targetCtx.moveTo(x + size/8, y + size/4); 
+                            targetCtx.moveTo(x + size/8, y + size/4);
                             targetCtx.quadraticCurveTo(x + size/4, y + size/4 - 2, x + 3*size/8, y + size/4);
-                            targetCtx.moveTo(x + 5*size/8, y + 3*size/4); 
+                            targetCtx.moveTo(x + 5*size/8, y + 3*size/4);
                             targetCtx.quadraticCurveTo(x + 3*size/4, y + 3*size/4 - 2, x + 7*size/8, y + 3*size/4);
                             targetCtx.stroke();
                             break;
-                            
+
                         case "lava":
                             targetCtx.fillStyle = "#9c1a08";
                             targetCtx.fillRect(x, y, size, size);
-                            
+
                             targetCtx.strokeStyle = "#e04e0b";
                             targetCtx.lineWidth = 2.5;
                             targetCtx.beginPath();
                             targetCtx.moveTo(x + size/3, y); targetCtx.lineTo(x + size/2, y + size/2); targetCtx.lineTo(x + size, y + 3*size/4);
                             targetCtx.moveTo(x, y + 2*size/3); targetCtx.lineTo(x + size/2, y + size/2);
                             targetCtx.stroke();
-                            
+
                             targetCtx.fillStyle = "#facc15";
                             targetCtx.beginPath();
                             targetCtx.arc(x + size/2, y + size/2, 3, 0, Math.PI * 2);
                             targetCtx.fill();
                             break;
-                            
+
                         case "abyss":
                             targetCtx.fillStyle = "#07080b";
                             targetCtx.fillRect(x, y, size, size);
@@ -1876,17 +1879,17 @@ document.addEventListener("DOMContentLoaded", () => {
     function drawGridLines(targetCtx = ctx) {
         targetCtx.strokeStyle = "rgba(212, 175, 55, 0.12)"; // subtle gold grid lines
         targetCtx.lineWidth = 1;
-        
+
         if (isHexMode()) {
             const radius = state.cellSize / 2;
             const spacingX = radius * Math.sqrt(3);
             const spacingY = radius * 1.5;
-            
+
             for (let r = 0; r < state.rows; r++) {
                 for (let c = 0; c < state.cols; c++) {
                     const cx = c * spacingX + (r % 2) * (spacingX / 2) + spacingX / 2;
                     const cy = r * spacingY + radius;
-                    
+
                     targetCtx.beginPath();
                     for (let i = 0; i < 6; i++) {
                         const angle = (Math.PI / 180) * (60 * i - 30);
@@ -1907,7 +1910,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.lineTo(c * state.cellSize, canvas.height);
                 targetCtx.stroke();
             }
-            
+
             // Horizontal lines
             for (let r = 0; r <= state.rows; r++) {
                 targetCtx.beginPath();
@@ -1928,7 +1931,7 @@ document.addEventListener("DOMContentLoaded", () => {
             targetCtx.strokeStyle = w.color;
             targetCtx.lineCap = "round";
             targetCtx.stroke();
-            
+
             // Draw a inner highlight line to make the wall look 3D / drop-shadowed
             targetCtx.beginPath();
             targetCtx.moveTo(w.x1 * size, w.y1 * size);
@@ -1953,27 +1956,27 @@ document.addEventListener("DOMContentLoaded", () => {
     function drawStamps(targetCtx = ctx) {
         const size = state.cellSize;
         const viewMode = viewModeSelect?.value || "gm";
-        
+
         state.stamps.forEach(s => {
             // If we are in player view mode, hide all secret stamps
             if (viewMode === "player" && s.isSecret) {
                 return;
             }
-            
+
             const pos = getTokenCanvasPos(s);
             const canvasX = pos.x;
             const canvasY = pos.y;
-            
+
             targetCtx.save();
-            
+
             // If it is a secret stamp and we are in GM mode, render it translucent
             if (viewMode === "gm" && s.isSecret) {
                 targetCtx.globalAlpha = 0.45;
             }
-            
+
             targetCtx.translate(canvasX, canvasY);
             targetCtx.rotate(s.rotation * Math.PI / 180);
-            
+
             // Selected stamp outline
             if (s.id === selectedStampId && activeTool === "stamp") {
                 targetCtx.strokeStyle = "#d4af37";
@@ -1982,7 +1985,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.beginPath();
                 targetCtx.arc(0, 0, (s.size * size * (s.image ? 0.5 : 0.7)), 0, Math.PI * 2);
                 targetCtx.stroke();
-                
+
                 // Directional pointer dot
                 targetCtx.fillStyle = "#d4af37";
                 targetCtx.beginPath();
@@ -1999,7 +2002,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.arc(0, 0, s.visionRadius * size, 0, Math.PI * 2);
                 targetCtx.stroke();
             }
-            
+
             // Draw custom avatar image if set
             if (s.image) {
                 let img = tokenImageCache[s.id];
@@ -2012,38 +2015,51 @@ document.addEventListener("DOMContentLoaded", () => {
                     };
                     tokenImageCache[s.id] = img;
                 }
-                
-                if (img.complete && img.naturalWidth !== 0) {
-                    const radius = s.size * size * 0.45;
-                    targetCtx.save();
-                    targetCtx.beginPath();
-                    targetCtx.arc(0, 0, radius * 0.9, 0, Math.PI * 2);
-                    targetCtx.clip();
-                    targetCtx.drawImage(img, -radius * 0.9, -radius * 0.9, radius * 1.8, radius * 1.8);
-                    targetCtx.restore();
 
-                    // Token Border Frame
-                    targetCtx.strokeStyle = s.isHero ? "#10b981" : "#ef4444";
-                    targetCtx.lineWidth = Math.max(2.5, radius * 0.1);
-                    targetCtx.shadowColor = "rgba(0, 0, 0, 0.45)";
-                    targetCtx.shadowBlur = 8;
-                    targetCtx.shadowOffsetY = 4;
-                    targetCtx.shadowOffsetX = 0;
-                    targetCtx.beginPath();
-                    targetCtx.arc(0, 0, radius * 0.9, 0, Math.PI * 2);
-                    targetCtx.stroke();
+                if (img.complete && img.naturalWidth !== 0) {
+                    const radius = s.size * size * 0.5;
+
+                    // Set image smoothing context based on HD vs Retro
+                    const isRetro = !s.image || s.image.includes("dawnlike");
+                    targetCtx.imageSmoothingEnabled = !isRetro;
+
+                    if (s.isToken || s.isHero) {
+                        // Circular token style
+                        targetCtx.save();
+                        targetCtx.beginPath();
+                        targetCtx.arc(0, 0, radius * 0.9, 0, Math.PI * 2);
+                        targetCtx.clip();
+                        targetCtx.drawImage(img, -radius * 0.9, -radius * 0.9, radius * 1.8, radius * 1.8);
+                        targetCtx.restore();
+
+                        // Token Border Frame
+                        targetCtx.strokeStyle = s.isHero ? "#10b981" : "#ef4444";
+                        targetCtx.lineWidth = Math.max(2.5, radius * 0.1);
+                        targetCtx.shadowColor = "rgba(0, 0, 0, 0.45)";
+                        targetCtx.shadowBlur = 8;
+                        targetCtx.shadowOffsetY = 4;
+                        targetCtx.shadowOffsetX = 0;
+                        targetCtx.beginPath();
+                        targetCtx.arc(0, 0, radius * 0.9, 0, Math.PI * 2);
+                        targetCtx.stroke();
+                    } else {
+                        // Standard rectangular stamp style (for items, hazards, decorations, HD stamps)
+                        targetCtx.save();
+                        targetCtx.drawImage(img, -radius, -radius, radius * 2, radius * 2);
+                        targetCtx.restore();
+                    }
                 } else {
                     drawEmojiGlyph(targetCtx, s, size);
                 }
             } else {
                 drawEmojiGlyph(targetCtx, s, size);
             }
-            
+
             targetCtx.restore();
-            
+
             // --- DRAW NON-ROTATING LABELS & BARS (HP, NAMES, CONDITIONS) ---
             const tokenRadius = s.size * size * 0.5;
-            
+
             // 1. Draw custom GM secret label
             if (viewMode === "gm" && s.isSecret) {
                 targetCtx.save();
@@ -2057,23 +2073,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.fillText("👁️ SECRETO", canvasX, canvasY + tokenRadius + (s.isToken ? 12 : 2));
                 targetCtx.restore();
             }
-            
+
             // 2. Draw custom token name
             if (s.name) {
                 targetCtx.save();
                 targetCtx.font = "bold 11px Outfit, Arial, sans-serif";
                 targetCtx.textAlign = "center";
                 targetCtx.textBaseline = "bottom";
-                
+
                 targetCtx.strokeStyle = "#000000";
                 targetCtx.lineWidth = 3;
                 targetCtx.strokeText(s.name, canvasX, canvasY - tokenRadius - 6);
-                
+
                 targetCtx.fillStyle = "#ffffff";
                 targetCtx.fillText(s.name, canvasX, canvasY - tokenRadius - 6);
                 targetCtx.restore();
             }
-            
+
             // 3. Draw HP Bar
             if (s.isToken && s.hpMax > 0 && s.hpCurrent !== undefined) {
                 targetCtx.save();
@@ -2081,23 +2097,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 const barHeight = 4;
                 const barX = canvasX - barWidth / 2;
                 const barY = canvasY + tokenRadius + 4;
-                
+
                 // Background
                 targetCtx.fillStyle = "#ef4444";
                 targetCtx.fillRect(barX, barY, barWidth, barHeight);
-                
+
                 // Current HP ratio
                 const ratio = Math.max(0, Math.min(1, s.hpCurrent / s.hpMax));
                 targetCtx.fillStyle = "#10b981";
                 targetCtx.fillRect(barX, barY, barWidth * ratio, barHeight);
-                
+
                 // Border
                 targetCtx.strokeStyle = "#0d0e12";
                 targetCtx.lineWidth = 1;
                 targetCtx.strokeRect(barX, barY, barWidth, barHeight);
                 targetCtx.restore();
             }
-            
+
             // 4. Draw Status Condition badges
             if (s.conditions && s.conditions.length > 0) {
                 targetCtx.save();
@@ -2110,17 +2126,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     poisoned: "🧪",
                     stunned: "😵"
                 };
-                
+
                 s.conditions.forEach(cond => {
                     const emoji = condEmojiMap[cond];
                     if (emoji) {
                         const offsetX = tokenRadius - condIdx * 13;
                         const offsetY = -tokenRadius - (s.name ? 16 : 4);
-                        
+
                         targetCtx.font = "12px Outfit, Arial, sans-serif";
                         targetCtx.textAlign = "center";
                         targetCtx.textBaseline = "middle";
-                        
+
                         targetCtx.shadowColor = "rgba(0,0,0,0.85)";
                         targetCtx.shadowBlur = 4;
                         targetCtx.fillText(emoji, canvasX + offsetX, canvasY + offsetY);
@@ -2135,10 +2151,10 @@ document.addEventListener("DOMContentLoaded", () => {
     function drawFog(targetCtx = ctx) {
         const size = state.cellSize;
         const viewMode = viewModeSelect?.value || "gm";
-        
+
         const hexMode = isHexMode();
         const fogFill = (viewMode === "gm") ? "rgba(6, 8, 12, 0.35)" : "rgba(6, 8, 12, 1.0)";
-        
+
         for (let r = 0; r < state.rows; r++) {
             for (let c = 0; c < state.cols; c++) {
                 const idx = r * state.cols + c;
@@ -2158,7 +2174,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function drawUIPreviews(targetCtx = ctx) {
         const size = state.cellSize;
-        
+
         // 1. Wall drawing preview
         if (activeTool === "wall" && wallStart && isDrawing) {
             const startX = wallStart.x * size;
@@ -2172,7 +2188,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 endX = Math.round(mouseGridPos.x) * size;
                 endY = Math.round(mouseGridPos.y) * size;
             }
-            
+
             targetCtx.strokeStyle = "rgba(212, 175, 55, 0.5)"; // gold dashed preview
             targetCtx.lineWidth = parseInt(wallWidthInput.value);
             targetCtx.lineCap = "round";
@@ -2183,7 +2199,7 @@ document.addEventListener("DOMContentLoaded", () => {
             targetCtx.stroke();
             targetCtx.setLineDash([]); // reset line dash
         }
-        
+
         // 2. Terrain brush / Fog brush hover overlay
         if ((activeTool === "terrain" || activeTool === "fog") && isMouseOverCanvas()) {
             if (isHexMode()) {
@@ -2193,16 +2209,16 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 const x = mouseCellPos.col * size;
                 const y = mouseCellPos.row * size;
-                
+
                 targetCtx.strokeStyle = "rgba(212, 175, 55, 0.6)";
                 targetCtx.lineWidth = 2;
                 targetCtx.strokeRect(x, y, size, size);
-                
+
                 targetCtx.fillStyle = "rgba(212, 175, 55, 0.08)";
                 targetCtx.fillRect(x, y, size, size);
             }
         }
-        
+
         // 3. Stamp ghost placement preview
         if (activeTool === "stamp" && (activeStamp || activeStampImage) && !selectedStampId && isMouseOverCanvas()) {
             let x, y;
@@ -2214,7 +2230,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 x = mouseCellPos.col * size + size/2;
                 y = mouseCellPos.row * size + size/2;
             }
-            
+
             targetCtx.save();
             targetCtx.translate(x, y);
             targetCtx.globalAlpha = 0.4;
@@ -2236,7 +2252,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.fillText(activeStamp, 0, 0);
             }
             targetCtx.restore();
-            
+
             // Small guide circle
             targetCtx.strokeStyle = "rgba(212, 175, 55, 0.3)";
             targetCtx.lineWidth = 1;
@@ -2250,16 +2266,16 @@ document.addEventListener("DOMContentLoaded", () => {
             let startX, startY, endX, endY, cells;
             const mode = mapModeSelect.value;
             const hexMode = isHexMode();
-            
+
             if (hexMode) {
                 const startCenter = getHexCenter(rulerStart.col, rulerStart.row);
                 startX = startCenter.x;
                 startY = startCenter.y;
-                
+
                 const endCenter = getHexCenter(mouseCellPos.col, mouseCellPos.row);
                 endX = endCenter.x;
                 endY = endCenter.y;
-                
+
                 const startCube = oddrToCube(rulerStart.col, rulerStart.row);
                 const endCube = oddrToCube(mouseCellPos.col, mouseCellPos.row);
                 cells = Math.max(
@@ -2272,12 +2288,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 startY = rulerStart.y * size;
                 endX = mouseGridPos.x * size;
                 endY = mouseGridPos.y * size;
-                
+
                 const dx = mouseGridPos.x - rulerStart.x;
                 const dy = mouseGridPos.y - rulerStart.y;
                 cells = Math.sqrt(dx * dx + dy * dy);
             }
-            
+
             targetCtx.save();
             targetCtx.strokeStyle = "#d4af37";
             targetCtx.lineWidth = 3;
@@ -2285,14 +2301,14 @@ document.addEventListener("DOMContentLoaded", () => {
             targetCtx.moveTo(startX, startY);
             targetCtx.lineTo(endX, endY);
             targetCtx.stroke();
-            
+
             // Start/End point dots
             targetCtx.fillStyle = "#d4af37";
             targetCtx.beginPath();
             targetCtx.arc(startX, startY, 4, 0, Math.PI * 2);
             targetCtx.arc(endX, endY, 4, 0, Math.PI * 2);
             targetCtx.fill();
-            
+
             let distText = "";
             if (mode === "region") {
                 const isKm = state.travelScaleUnit === "km";
@@ -2321,22 +2337,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 const ft = Math.round(cells * 5);
                 distText = `${cells.toFixed(1)} c (${ft} ft)`;
             }
-            
+
             const midX = (startX + endX) / 2;
             const midY = (startY + endY) / 2;
-            
+
             // Draw background badge
             targetCtx.font = "bold 11px Outfit, Arial, sans-serif";
             targetCtx.textAlign = "center";
             targetCtx.textBaseline = "middle";
             const textWidth = targetCtx.measureText(distText).width;
-            
+
             targetCtx.fillStyle = "rgba(13, 14, 18, 0.9)";
             targetCtx.strokeStyle = "#d4af37";
             targetCtx.lineWidth = 1;
             targetCtx.fillRect(midX - textWidth/2 - 6, midY - 10, textWidth + 12, 20);
             targetCtx.strokeRect(midX - textWidth/2 - 6, midY - 10, textWidth + 12, 20);
-            
+
             targetCtx.fillStyle = "#f1cc5b";
             targetCtx.fillText(distText, midX, midY);
             targetCtx.restore();
@@ -2354,7 +2370,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mapTemplateSelect.addEventListener("change", (e) => {
             const name = e.target.value;
             if (!name) return;
-            
+
             if (confirm("¿Quieres cargar esta plantilla? Esto sobrescribirá tu mapa actual.")) {
                 if (name === "proceduralRegion") {
                     generateProceduralRegion();
@@ -2395,10 +2411,10 @@ document.addEventListener("DOMContentLoaded", () => {
         btnApplyGridSize.addEventListener("click", () => {
             const cols = Math.max(5, Math.min(80, parseInt(gridColsInput.value) || 25));
             const rows = Math.max(5, Math.min(80, parseInt(gridRowsInput.value) || 20));
-            
+
             gridColsInput.value = cols;
             gridRowsInput.value = rows;
-            
+
             if (confirm(`¿Cambiar tamaño a ${cols}x${rows}? Esto reajustará el mapa.`)) {
                 initMapState(cols, rows);
                 centerMap();
@@ -2423,7 +2439,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 activeTerrain = opt.dataset.terrain;
             });
         });
-        
+
         btnBrushPaint.addEventListener("click", () => {
             btnBrushPaint.classList.add("active");
             btnBrushFill.classList.remove("active");
@@ -2454,7 +2470,7 @@ document.addEventListener("DOMContentLoaded", () => {
             tab.addEventListener("click", () => {
                 tabBtns.forEach(t => t.classList.remove("active"));
                 tab.classList.add("active");
-                
+
                 tabContents.forEach(c => c.classList.remove("active"));
                 document.getElementById(tab.dataset.tab).classList.add("active");
             });
@@ -2462,11 +2478,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         stampItems.forEach(item => {
             item.addEventListener("click", () => {
-                stampItems.forEach(i => i.classList.remove("active"));
+                document.querySelectorAll(".stamp-item").forEach(i => i.classList.remove("active"));
                 item.classList.add("active");
-                
+
                 activeStamp = item.dataset.emoji || "";
                 activeStampImage = item.dataset.image || null;
+                activeCustomAssetId = null;
                 activeStampName = item.dataset.name || item.querySelector("small")?.textContent || "";
                 activeStampDescription = item.dataset.description || "";
                 selectedStampId = null;
@@ -2474,7 +2491,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 draw();
             });
         });
-        
+
         stampSizeInput.addEventListener("input", (e) => {
             const val = parseFloat(e.target.value);
             stampSizeVal.textContent = `${val.toFixed(1)}x`;
@@ -2486,7 +2503,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         });
-        
+
         stampSizeInput.addEventListener("change", () => {
             if (selectedStampId) saveHistory();
         });
@@ -2502,7 +2519,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         });
-        
+
         stampRotationInput.addEventListener("change", () => {
             if (selectedStampId) saveHistory();
         });
@@ -2817,7 +2834,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 draw();
             }
         });
-        
+
         btnUndo.addEventListener("click", undo);
         btnRedo.addEventListener("click", redo);
 
@@ -2848,13 +2865,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const vwHeight = viewport.clientHeight;
         const centerX = vwWidth / 2;
         const centerY = vwHeight / 2;
-        
+
         const mapX = (centerX - panX) / zoom;
         const mapY = (centerY - panY) / zoom;
-        
+
         panX = centerX - mapX * newZoom;
         panY = centerY - mapY * newZoom;
-        
+
         zoom = newZoom;
         updateTransform();
         draw();
@@ -2864,10 +2881,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const rect = canvas.getBoundingClientRect();
         const canvasX = (e.clientX - rect.left) / zoom;
         const canvasY = (e.clientY - rect.top) / zoom;
-        
+
         mouseGridPos.x = canvasX / state.cellSize;
         mouseGridPos.y = canvasY / state.cellSize;
-        
+
         if (isHexMode()) {
             const hex = getClosestHex(canvasX, canvasY);
             mouseCellPos.col = hex.col;
@@ -2881,7 +2898,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- MOUSE CLICK DRAGS ---
     function handleMouseDown(e) {
         updateMousePositions(e);
-        
+
         // Navigation: Pan
         if (e.button === 2 || e.button === 1 || activeTool === "pan" || e.spaceKey) {
             isPanning = true;
@@ -2894,7 +2911,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (e.button === 0) { // Left click
             isDrawing = true;
-            
+
             if (activeTool === "terrain") {
                 if (terrainPaintMode === "paint") {
                     paintTerrainAtMouse();
@@ -2903,7 +2920,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     saveHistory();
                 }
             }
-            
+
             else if (activeTool === "wall") {
                 if (isHexMode()) {
                     const rect = canvas.getBoundingClientRect();
@@ -2935,14 +2952,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     };
                 }
             }
-            
+
             else if (activeTool === "stamp") {
                 const clickedStamp = findStampAt(mouseGridPos.x, mouseGridPos.y);
                 if (clickedStamp) {
                     selectedStampId = clickedStamp.id;
                     draggedStamp = clickedStamp;
                     updateStampControlUI();
-                    
+
                     stampItems.forEach(item => {
                         if ((clickedStamp.image && item.dataset.image === clickedStamp.image) ||
                             (!clickedStamp.image && item.dataset.emoji === clickedStamp.emoji)) {
@@ -2955,7 +2972,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (activeStamp || activeStampImage) {
                         const size = parseFloat(stampSizeInput.value);
                         const rotation = parseInt(stampRotationInput.value);
-                        
+
                         let sx, sy, freePosition = false;
                         if (e.altKey) {
                             if (isHexMode()) {
@@ -2975,11 +2992,12 @@ document.addEventListener("DOMContentLoaded", () => {
                             sx = mouseCellPos.col + 0.5;
                             sy = mouseCellPos.row + 0.5;
                         }
-                        
+
                         const newStamp = {
                             id: Date.now() + Math.random().toString(36).substr(2, 5),
                             emoji: activeStamp || "◆",
                             image: activeStampImage || undefined,
+                            customAssetId: activeCustomAssetId || undefined,
                             x: sx,
                             y: sy,
                             size: size,
@@ -2996,7 +3014,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             description: activeStampDescription,
                             showDescToPlayers: !!activeStampDescription
                         };
-                        
+
                         // Default hero traits to some stamps
                         if (["🧙", "🛡️", "🏹", "🧝", "👤", "✝️", "⛵", "🧙‍♀️", "🤴"].includes(activeStamp)) {
                             newStamp.isToken = true;
@@ -3010,7 +3028,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             newStamp.hpCurrent = 15;
                             newStamp.hpMax = 15;
                         }
-                        
+
                         state.stamps.push(newStamp);
                         selectedStampId = newStamp.id;
                         revealFogAroundTokens();
@@ -3022,18 +3040,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
             }
-            
+
             else if (activeTool === "fog") {
                 paintFogAtMouse();
             }
-            
+
             draw();
         }
     }
 
     function handleMouseMove(e) {
         updateMousePositions(e);
-        
+
         if (isPanning) {
             panX = e.clientX - startX;
             panY = e.clientY - startY;
@@ -3067,7 +3085,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 revealFogAroundTokens();
             }
         }
-        
+
         draw();
     }
 
@@ -3096,10 +3114,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 panClickStart = null;
             }
         }
-        
+
         if (isDrawing) {
             isDrawing = false;
-            
+
             if (activeTool === "terrain" && terrainPaintMode === "paint") {
                 saveHistory();
             }
@@ -3119,7 +3137,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     endX = Math.round(mouseGridPos.x);
                     endY = Math.round(mouseGridPos.y);
                 }
-                
+
                 if (wallStart.x !== endX || wallStart.y !== endY) {
                     state.walls.push({
                         x1: wallStart.x,
@@ -3140,26 +3158,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 draggedStamp = null;
                 saveHistory();
             }
-            
+
             draw();
         }
     }
 
     function handleWheel(e) {
         e.preventDefault();
-        
+
         const zoomFactor = 1.1;
         const newZoom = e.deltaY < 0 ? Math.min(zoom * zoomFactor, 3.0) : Math.max(zoom / zoomFactor, 0.25);
-        
+
         const mouseX = e.clientX - viewport.offsetLeft;
         const mouseY = e.clientY - viewport.offsetTop;
-        
+
         const mapX = (mouseX - panX) / zoom;
         const mapY = (mouseY - panY) / zoom;
-        
+
         panX = mouseX - mapX * newZoom;
         panY = mouseY - mapY * newZoom;
-        
+
         zoom = newZoom;
         updateTransform();
         draw();
@@ -3168,7 +3186,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function handleKeyDown(e) {
         if (document.activeElement.tagName === "INPUT" && document.activeElement.type === "number") return;
         if (helpModal.classList.contains("active")) return;
-        
+
         if (e.key.toLowerCase() === "r" && activeTool === "stamp" && selectedStampId) {
             e.preventDefault();
             const s = state.stamps.find(x => x.id === selectedStampId);
@@ -3180,17 +3198,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 draw();
             }
         }
-        
+
         if ((e.key === "Delete" || e.key === "Backspace") && activeTool === "stamp" && selectedStampId) {
             e.preventDefault();
             deleteSelectedStamp();
         }
-        
+
         if (e.ctrlKey && e.key.toLowerCase() === "z") {
             e.preventDefault();
             undo();
         }
-        
+
         if (e.ctrlKey && e.key.toLowerCase() === "y") {
             e.preventDefault();
             redo();
@@ -3256,7 +3274,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const size = state.cellSize;
         const px = gridX * size;
         const py = gridY * size;
-        
+
         for (let i = state.stamps.length - 1; i >= 0; i--) {
             const s = state.stamps[i];
             const pos = getTokenCanvasPos(s);
@@ -3271,7 +3289,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function updateStampControlUI() {
         const viewMode = viewModeSelect?.value || "gm";
-        
+
         if (selectedStampId) {
             const s = state.stamps.find(x => x.id === selectedStampId);
             if (s) {
@@ -3280,9 +3298,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     stampEditControls.style.display = "none";
                     return;
                 }
-                
+
                 stampEditControls.style.display = "block";
-                
+
                 // Populate inputs
                 stampSizeInput.value = s.size;
                 stampSizeVal.textContent = `${s.size.toFixed(1)}x`;
@@ -3292,10 +3310,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 tokenIsSecretChk.checked = !!s.isSecret;
                 if (tokenDescriptionInput) tokenDescriptionInput.value = s.description || "";
                 if (tokenShowDescToPlayersChk) tokenShowDescToPlayersChk.checked = !!s.showDescToPlayers;
-                
+
                 const mode = mapModeSelect?.value || "combat";
                 const isRegion = mode === "region";
-                
+
                 // DOM element wrappers to show/hide
                 const nameSetting = tokenNameInput.closest('.setting-item');
                 const sizeSetting = stampSizeInput.closest('.setting-item');
@@ -3309,16 +3327,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 const helpText = document.querySelector("#optionsStamp .help-text");
                 const tokenDescriptionSetting = document.getElementById("tokenDescriptionSetting");
                 const tokenShowDescSetting = document.getElementById("tokenShowDescSetting");
-                
+
                 if (viewMode === "player") {
                     // Disable editing
                     tokenNameInput.disabled = true;
                     if (tokenDescriptionInput) tokenDescriptionInput.disabled = true;
-                    
+
                     // Show name and description
                     if (nameSetting) nameSetting.style.display = "flex";
                     if (tokenDescriptionSetting) tokenDescriptionSetting.style.display = "flex";
-                    
+
                     // Hide everything else
                     if (sizeSetting) sizeSetting.style.display = "none";
                     if (rotationSetting) rotationSetting.style.display = "none";
@@ -3336,7 +3354,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     // GM Mode: Enable editing
                     tokenNameInput.disabled = false;
                     if (tokenDescriptionInput) tokenDescriptionInput.disabled = false;
-                    
+
                     // Show basic controls
                     if (nameSetting) nameSetting.style.display = "flex";
                     if (sizeSetting) sizeSetting.style.display = "flex";
@@ -3345,12 +3363,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (btnGroupEditing) btnGroupEditing.style.display = "flex";
                     if (uploaderSection) uploaderSection.style.display = "block";
                     if (helpText) helpText.style.display = "block";
-                    
+
                     if (isRegion) {
                         // Region Exploration Settings
                         if (tokenDescriptionSetting) tokenDescriptionSetting.style.display = "flex";
                         if (tokenShowDescSetting) tokenShowDescSetting.style.display = "flex";
-                        
+
                         if (typeSetting) typeSetting.style.display = "none";
                         if (visionRadiusSetting) visionRadiusSetting.style.display = "none";
                         if (hpSetting) hpSetting.style.display = "none";
@@ -3360,10 +3378,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         // Combat Settings
                         if (tokenDescriptionSetting) tokenDescriptionSetting.style.display = "none";
                         if (tokenShowDescSetting) tokenShowDescSetting.style.display = "none";
-                        
+
                         if (typeSetting) typeSetting.style.display = "flex";
                         if (btnAddToInitiative) btnAddToInitiative.style.display = "block";
-                        
+
                         if (s.isHero) {
                             tokenTypeSelect.value = "hero";
                             if (visionRadiusSetting) visionRadiusSetting.style.display = "flex";
@@ -3432,6 +3450,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     description: s.description || "",
                     showDescToPlayers: !!s.showDescToPlayers,
                     image: s.image || undefined,
+                    customAssetId: s.customAssetId || undefined,
                     freePosition: !!s.freePosition
                 };
                 state.stamps.push(newStamp);
@@ -3446,23 +3465,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function floodFillTerrain(startCol, startRow, newTerrain) {
         if (startCol < 0 || startCol >= state.cols || startRow < 0 || startRow >= state.rows) return;
-        
+
         const startIdx = startRow * state.cols + startCol;
         const startCell = state.terrain[startIdx];
         const oldTerrainType = (startCell && typeof startCell === "object") ? startCell.type : startCell;
-        
+
         if (oldTerrainType === newTerrain) return;
-        
+
         const queue = [[startCol, startRow]];
         const isRegion = mapModeSelect?.value === "region";
         const isHex = isHexMode();
-        
+
         while (queue.length > 0) {
             const [c, r] = queue.shift();
             const idx = r * state.cols + c;
             const currentCell = state.terrain[idx];
             const currentType = (currentCell && typeof currentCell === "object") ? currentCell.type : currentCell;
-            
+
             if (currentType === oldTerrainType) {
                 if (isRegion) {
                     state.terrain[idx] = {
@@ -3472,7 +3491,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     state.terrain[idx] = newTerrain;
                 }
-                
+
                 if (isHex) {
                     // Hex grid neighbors (6-connectivity, pointy-topped odd-r vertical layout)
                     const neighbors = [
@@ -3510,10 +3529,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btn) {
             toolBtns.forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
-            
+
             activeTool = toolName;
             optionGroups.forEach(g => g.style.display = "none");
-            
+
             if (activeTool === "terrain") {
                 document.getElementById("optionsTerrain").style.display = "block";
             } else if (activeTool === "wall") {
@@ -3525,7 +3544,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 document.getElementById("optionsPan").style.display = "block";
             }
-            
+
             if (activeTool !== "stamp") {
                 selectedStampId = null;
                 updateStampControlUI();
@@ -3541,18 +3560,18 @@ document.addEventListener("DOMContentLoaded", () => {
         const btnFog = document.getElementById("toolFog");
         const combatTerrains = document.getElementById("combatTerrains");
         const explorationBiomes = document.getElementById("explorationBiomes");
-        
+
         if (mode === "region") {
             if (initiativeTracker) initiativeTracker.style.display = "none";
             if (btnWall) btnWall.style.display = "none";
             if (btnFog) btnFog.style.display = "none";
             if (combatTerrains) combatTerrains.style.display = "none";
             if (explorationBiomes) explorationBiomes.style.display = "grid";
-            
+
             if (activeTool === "wall" || activeTool === "fog") {
                 selectTool("pan");
             }
-            
+
             const activeBioOpt = document.querySelector("#explorationBiomes .terrain-option.active");
             if (activeBioOpt) {
                 activeTerrain = activeBioOpt.dataset.terrain;
@@ -3570,7 +3589,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (btnFog) btnFog.style.display = "block";
             if (combatTerrains) combatTerrains.style.display = "grid";
             if (explorationBiomes) explorationBiomes.style.display = "none";
-            
+
             const activeCombOpt = document.querySelector("#combatTerrains .terrain-option.active");
             if (activeCombOpt) {
                 activeTerrain = activeCombOpt.dataset.terrain;
@@ -3583,7 +3602,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         }
-        
+
         updateStampControlUI();
     }
 
@@ -4173,22 +4192,22 @@ document.addEventListener("DOMContentLoaded", () => {
     function loadPresetTemplate(name) {
         const tmpl = mapTemplates[name];
         if (!tmpl) return;
-        
+
         // Clean map state
         state.cols = tmpl.cols;
         state.rows = tmpl.rows;
         gridColsInput.value = tmpl.cols;
         gridRowsInput.value = tmpl.rows;
-        
+
         state.terrain = decodeTerrain(tmpl.terrainStr, tmpl.cols, tmpl.rows, tmpl.terrainMap).map(cell => {
             return { type: cell, variation: Math.floor(Math.random() * 3) };
         });
         state.walls = JSON.parse(JSON.stringify(tmpl.walls));
         state.stamps = JSON.parse(JSON.stringify(tmpl.stamps));
-        
+
         // Initialize Fog of War
         state.fog = Array(tmpl.cols * tmpl.rows).fill(false);
-        
+
         // Set map mode defaults
         if (tmpl.mode === "region") {
             mapModeSelect.value = "region";
@@ -4208,12 +4227,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (travelScaleValueInput) travelScaleValueInput.value = state.travelScaleValue;
         if (travelScaleUnitSelect) travelScaleUnitSelect.value = state.travelScaleUnit;
         if (travelMethodSelect) travelMethodSelect.value = state.travelMethod;
-        
+
         selectedStampId = null;
         syncUIForMapMode();
         clearInitiative();
         revealFogAroundTokens();
-        
+
         resizeCanvas();
         centerMap();
         saveHistory();
@@ -4223,29 +4242,29 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- SYNTHETIC DICE ROLLER WITH AUDIO SYNTH ---
     function rollDice(die) {
         playDiceSound();
-        
+
         // Rolling animation in console
         let rollCount = 0;
         const maxRolls = 8;
         const interval = 60; // ms
         const overlay = startDiceOverlay(die);
-        
+
         diceConsole.innerHTML = `<div class="roll-result">🎲 Lanzando d${die}...</div>`;
-        
+
         const rollTimer = setInterval(() => {
             const tempVal = Math.floor(Math.random() * die) + 1;
             updateDiceOverlay(overlay, tempVal);
             diceConsole.innerHTML = `<div class="roll-result">🎲 Lanzando d${die}: <span class="roll-val">${tempVal}</span></div>`;
             rollCount++;
-            
+
             if (rollCount >= maxRolls) {
                 clearInterval(rollTimer);
-                
+
                 // Final result
                 const resultVal = Math.floor(Math.random() * die) + 1;
                 let resultClass = "roll-val";
                 let textResult = `${resultVal}`;
-                
+
                 if (die === 20) {
                     if (resultVal === 20) {
                         resultClass = "roll-crit";
@@ -4258,10 +4277,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     resultClass = "roll-crit"; // max result on other dice
                 }
                 finishDiceOverlay(overlay, die, resultVal, resultClass);
-                
+
                 diceConsole.innerHTML = `
                     <div class="roll-result">
-                        Lanzó <strong>d${die}</strong>: 
+                        Lanzó <strong>d${die}</strong>:
                         <span class="${resultClass}">${textResult}</span>
                     </div>
                 `;
@@ -4349,22 +4368,22 @@ document.addEventListener("DOMContentLoaded", () => {
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
             const audioCtx = new AudioContextClass();
             const now = audioCtx.currentTime;
-            
+
             // Generate 3 rapid thuds/clacks
             for (let i = 0; i < 3; i++) {
                 const time = now + i * 0.08;
-                
+
                 // Pitch osc
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                
+
                 osc.type = "triangle";
                 osc.frequency.setValueAtTime(140 - i * 30, time);
                 osc.frequency.exponentialRampToValueAtTime(40, time + 0.06);
-                
+
                 gain.gain.setValueAtTime(0.18, time);
                 gain.gain.exponentialRampToValueAtTime(0.01, time + 0.06);
-                
+
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.start(time);
@@ -4380,13 +4399,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const dataStr = JSON.stringify(state, null, 2);
         const blob = new Blob([dataStr], { type: "application/json" });
         const url = URL.createObjectURL(blob);
-        
+
         const a = document.createElement("a");
         a.href = url;
         a.download = `mapforge-dnd-map-${Date.now()}.json`;
         document.body.appendChild(a);
         a.click();
-        
+
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
@@ -4394,7 +4413,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function loadMapJson(e) {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         const reader = new FileReader();
         reader.onload = function(evt) {
             try {
@@ -4418,12 +4437,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function exportMapPng() {
         const expCanvas = document.createElement("canvas");
         const expCtx = expCanvas.getContext("2d");
-        
+
         expCanvas.width = canvas.width;
         expCanvas.height = canvas.height;
-        
+
         const includeGrid = confirm("¿Quieres exportar el mapa INCLUYENDO las líneas de rejilla?");
-        
+
         drawTerrain(expCtx);
         if (includeGrid) {
             drawGridLines(expCtx);
@@ -4431,7 +4450,7 @@ document.addEventListener("DOMContentLoaded", () => {
         drawWalls(expCtx);
         drawStamps(expCtx);
         drawFog(expCtx);
-        
+
         const url = expCanvas.toDataURL("image/png");
         const a = document.createElement("a");
         a.href = url;
@@ -4445,17 +4464,17 @@ document.addEventListener("DOMContentLoaded", () => {
     function drawInitiativeList() {
         if (!initiativeList) return;
         initiativeList.innerHTML = "";
-        
+
         if (!state.initiative || state.initiative.length === 0) {
             initiativeList.innerHTML = `<div class="init-placeholder">Sin combate activo...</div>`;
             return;
         }
-        
+
         state.initiative.forEach((item, idx) => {
             const isActive = (idx === activeInitIdx);
             const itemEl = document.createElement("div");
             itemEl.className = `init-item ${isActive ? "active" : ""}`;
-            
+
             itemEl.innerHTML = `
                 <div class="name-group">
                     ${isActive ? '<span class="active-indicator">➔</span>' : ''}
@@ -4466,12 +4485,12 @@ document.addEventListener("DOMContentLoaded", () => {
                     <button class="btn-remove-init" data-id="${item.id}">×</button>
                 </div>
             `;
-            
+
             itemEl.querySelector(".btn-remove-init").addEventListener("click", (e) => {
                 e.stopPropagation();
                 removeCreatureFromInitiative(item.id);
             });
-            
+
             initiativeList.appendChild(itemEl);
         });
     }
@@ -4602,18 +4621,18 @@ document.addEventListener("DOMContentLoaded", () => {
     function setupRightPanel() {
         const rightPanel = document.getElementById("rightPanel");
         const btnToggleRightPanel = document.getElementById("btnToggleRightPanel");
-        
+
         // Pestañas
         const rightTabBtns = document.querySelectorAll(".right-tab-btn");
         const rightTabContents = document.querySelectorAll(".right-tab-content");
-        
+
         // IA Master
         const aiModelSelect = document.getElementById("aiModelSelect");
         const aiChatMessages = document.getElementById("aiChatMessages");
         const aiChatInput = document.getElementById("aiChatInput");
         const btnAiChatSend = document.getElementById("btnAiChatSend");
         const shortcutBtns = document.querySelectorAll(".shortcut-btn");
-        
+
         // Compendio
         const compendiumSearch = document.getElementById("compendiumSearch");
         const compendiumFilter = document.getElementById("compendiumFilter");
@@ -4621,11 +4640,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const compendiumDetail = document.getElementById("compendiumDetail");
         const compendiumDetailContent = document.getElementById("compendiumDetailContent");
         const btnBackToResults = document.getElementById("btnBackToResults");
-        
+
         // Notas
         const campaignNotes = document.getElementById("campaignNotes");
         const notesSaveStatus = document.getElementById("notesSaveStatus");
-        
+
         // Biblioteca
         const libSaveName = document.getElementById("libSaveName");
         const btnLibSave = document.getElementById("btnLibSave");
@@ -4640,7 +4659,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const bgScale = document.getElementById("bgScale");
         const bgX = document.getElementById("bgX");
         const bgY = document.getElementById("bgY");
-        
+
         // Avatar Personalizado
         const customAvatarInput = document.getElementById("customAvatarInput");
         const customAvatarPreview = document.getElementById("customAvatarPreview");
@@ -4665,7 +4684,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const isCollapsed = rightPanel.classList.toggle("collapsed");
             localStorage.setItem("rightPanelCollapsed", isCollapsed);
             btnToggleRightPanel.textContent = isCollapsed ? "◀" : "▶";
-            
+
             // Re-centrar el mapa y dibujar para evitar huecos en el canvas
             setTimeout(() => {
                 handleWindowResize();
@@ -4679,7 +4698,7 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.addEventListener("click", () => {
                 rightTabBtns.forEach(b => b.classList.remove("active"));
                 rightTabContents.forEach(c => c.classList.remove("active"));
-                
+
                 btn.classList.add("active");
                 const tabId = btn.dataset.tab;
                 document.getElementById(tabId).classList.add("active");
@@ -4692,7 +4711,7 @@ document.addEventListener("DOMContentLoaded", () => {
         campaignNotes.addEventListener("input", () => {
             notesSaveStatus.textContent = "Guardando...";
             notesSaveStatus.style.opacity = "1";
-            
+
             clearTimeout(notesTimeout);
             notesTimeout = setTimeout(() => {
                 localStorage.setItem("campaignNotes", campaignNotes.value);
@@ -4724,12 +4743,12 @@ document.addEventListener("DOMContentLoaded", () => {
             maps.forEach((item, idx) => {
                 const itemEl = document.createElement("div");
                 itemEl.className = "lib-item";
-                
+
                 // Contar stamps y walls
                 const stampsCount = item.state?.stamps?.length || 0;
                 const wallsCount = item.state?.walls?.length || 0;
                 const sizeStr = `${item.state?.cols || 25}x${item.state?.rows || 20}`;
-                
+
                 itemEl.innerHTML = `
                     <div class="name-group">
                         <span class="map-name">${item.name}</span>
@@ -4740,7 +4759,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <button class="btn btn-danger btn-small btn-lib-del" data-idx="${idx}">🗑️</button>
                     </div>
                 `;
-                
+
                 itemEl.querySelector(".btn-lib-load").addEventListener("click", () => {
                     if (confirm(`¿Quieres cargar el mapa "${item.name}"? Se perderá el diseño actual no guardado.`)) {
                         restoreState(item.state);
@@ -4750,7 +4769,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         alert(`Mapa "${item.name}" cargado con éxito.`);
                     }
                 });
-                
+
                 itemEl.querySelector(".btn-lib-del").addEventListener("click", () => {
                     if (confirm(`¿Eliminar permanentemente "${item.name}" de la biblioteca?`)) {
                         const currentMaps = getLibraryMaps();
@@ -4759,7 +4778,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         renderLibrary();
                     }
                 });
-                
+
                 libraryList.appendChild(itemEl);
             });
         }
@@ -4770,9 +4789,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 alert("Por favor, ingresa un nombre para el mapa.");
                 return;
             }
-            
+
             const currentMaps = getLibraryMaps();
-            
+
             // Deep copy of current state
             const stateCopy = JSON.parse(JSON.stringify({
                 cols: state.cols,
@@ -4793,13 +4812,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 travelScaleUnit: state.travelScaleUnit,
                 travelMethod: state.travelMethod
             }));
-            
+
             currentMaps.push({
                 name: name,
                 state: stateCopy,
                 date: new Date().toLocaleDateString()
             });
-            
+
             saveLibraryMaps(currentMaps);
             renderLibrary();
             libSaveName.value = "";
@@ -4934,7 +4953,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (customAvatarNameGroup) customAvatarNameGroup.style.display = "flex";
                         if (customAvatarTypeGroup) customAvatarTypeGroup.style.display = "flex";
                         if (btnCreateCustomToken) btnCreateCustomToken.style.display = "block";
-                        
+
                         // Prefill token name from file name if empty
                         if (customAvatarName && !customAvatarName.value.trim()) {
                             const nameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
@@ -4953,20 +4972,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     alert("Por favor, selecciona una imagen primero.");
                     return;
                 }
-                
+
                 const name = (customAvatarName && customAvatarName.value.trim()) ? customAvatarName.value.trim() : "Ficha";
                 const type = customAvatarType ? customAvatarType.value : "hero";
                 const isHero = (type === "hero");
-                
+
                 // Calculate position near the center of the viewport
                 const viewCanvasX = (-panX + viewport.clientWidth / 2) / zoom;
                 const viewCanvasY = (-panY + viewport.clientHeight / 2) / zoom;
                 const viewHex = isHexMode() ? getClosestHex(viewCanvasX, viewCanvasY) : null;
                 const viewX = viewHex ? viewHex.col + 0.5 : viewCanvasX / state.cellSize;
                 const viewY = viewHex ? viewHex.row + 0.5 : viewCanvasY / state.cellSize;
-                
+
                 const hp = isHero ? 25 : 15;
-                
+
                 const newStamp = {
                     id: Date.now() + Math.random().toString(36).substr(2, 5),
                     emoji: isHero ? "🛡️" : "👹", // Fallback emoji if image fails to render
@@ -4985,14 +5004,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     isSecret: false,
                     freePosition: false
                 };
-                
+
                 state.stamps.push(newStamp);
                 selectedStampId = newStamp.id;
                 revealFogAroundTokens();
                 updateStampControlUI();
                 saveHistory();
                 draw();
-                
+
                 // Clear the uploader elements
                 if (customAvatarInput) customAvatarInput.value = "";
                 if (imgAvatarPrev) imgAvatarPrev.src = "";
@@ -5001,7 +5020,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (customAvatarNameGroup) customAvatarNameGroup.style.display = "none";
                 if (customAvatarTypeGroup) customAvatarTypeGroup.style.display = "none";
                 if (btnCreateCustomToken) btnCreateCustomToken.style.display = "none";
-                
+
                 alert(`Ficha personalizada "${name}" creada en el mapa.`);
             });
         }
@@ -5340,14 +5359,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         function renderDetailContent(detail, category) {
             let html = `<h2>${detail.name}</h2>`;
-            
+
             if (category === "monsters") {
                 const size = detail.size || "Medio";
                 const type = detail.type || "Humanoide";
                 const align = detail.alignment || "Neutral";
                 const hp = detail.hit_points || 10;
                 const hd = detail.hit_dice || "2d6";
-                
+
                 // AC parser
                 let ac = 10;
                 if (detail.armor_class) {
@@ -5357,7 +5376,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         ac = detail.armor_class;
                     }
                 }
-                
+
                 // Speed parser — handles both dojo string format and dnd5eapi object format
                 let speedStr = "30 ft.";
                 if (detail.speed) {
@@ -5367,16 +5386,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         speedStr = Object.entries(detail.speed).map(([k, v]) => `${k}: ${v}`).join(", ");
                     }
                 }
-                
+
                 html += `
                     <div class="meta">${size} ${type}, ${align}</div>
-                    
+
                     <div class="stat-block">
                         <strong>🛡️ Clase de Armadura (AC):</strong> ${ac}<br>
                         <strong>❤️ Puntos de Vida (HP):</strong> ${hp} (${hd})<br>
                         <strong>🏃 Velocidad:</strong> ${speedStr}
                     </div>
-                    
+
                     <div class="stat-block">
                         <div class="stat-grid">
                             <div class="stat-cell"><strong>STR</strong> ${detail.strength} (${getMod(detail.strength)})</div>
@@ -5388,7 +5407,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                 `;
-                
+
                 // Habilidades especiales
                 if (detail.special_abilities && detail.special_abilities.length > 0) {
                     html += `<h3>Habilidades Especiales</h3>`;
@@ -5396,7 +5415,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         html += `<p><strong>${ability.name}:</strong> ${ability.desc}</p>`;
                     });
                 }
-                
+
                 // Acciones
                 if (detail.actions && detail.actions.length > 0) {
                     html += `<h3>Acciones</h3>`;
@@ -5404,7 +5423,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         html += `<p><strong>${act.name}:</strong> ${act.desc}</p>`;
                     });
                 }
-                
+
                 // Botones del VTT
                 html += `
                     <div class="actions-bar">
@@ -5412,8 +5431,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         <button class="btn btn-secondary btn-small" id="btnSpawnMonsterInit">⚔️ Añadir a Iniciativa</button>
                     </div>
                 `;
-            } 
-            
+            }
+
             else if (category === "spells") {
                 const lvl = detail.level === 0 ? "Truco" : `Nivel ${detail.level}`;
                 const school = detail.school?.name || "Evocación";
@@ -5422,10 +5441,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 const comp = detail.components ? detail.components.join(", ") : "V, S";
                 const dur = detail.duration || "Instantáneo";
                 const conc = detail.concentration ? " (Concentración)" : "";
-                
+
                 html += `
                     <div class="meta">${lvl} de ${school}</div>
-                    
+
                     <div class="stat-block">
                         <strong>Tiem. de Lanzamiento:</strong> ${ctime}<br>
                         <strong>Alcance:</strong> ${range}<br>
@@ -5433,43 +5452,43 @@ document.addEventListener("DOMContentLoaded", () => {
                         <strong>Duración:</strong> ${dur}${conc}
                     </div>
                 `;
-                
+
                 if (detail.desc) {
                     detail.desc.forEach(pText => {
                         html += `<p>${pText}</p>`;
                     });
                 }
-                
+
                 if (detail.higher_level) {
                     html += `<h3>A Niveles Superiores</h3>`;
                     detail.higher_level.forEach(pText => {
                         html += `<p>${pText}</p>`;
                     });
                 }
-            } 
-            
+            }
+
             else if (category === "magic-items") {
                 const rarity = detail.rarity?.name || "Común";
                 const type = detail.equipment_category?.name || "Objeto Mágico";
-                
+
                 html += `
                     <div class="meta">${type}, Rarity: ${rarity}</div>
                 `;
-                
+
                 if (detail.desc) {
                     detail.desc.forEach(pText => {
                         html += `<p>${pText}</p>`;
                     });
                 }
             }
-            
+
             compendiumDetailContent.innerHTML = html;
-            
+
             // Vincular botones creados dinámicamente para monstruos
             if (category === "monsters") {
                 const btnSpawn = document.getElementById("btnSpawnMonsterToken");
                 const btnInit = document.getElementById("btnSpawnMonsterInit");
-                
+
                 // Determinar emoji del monstruo
                 let emoji = "👹";
                 const mName = detail.name.toLowerCase();
@@ -5483,7 +5502,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 else if (mName.includes("specter") || mName.includes("ghost") || mName.includes("espect")) emoji = "👻";
                 else if (mName.includes("witch") || mName.includes("bruja")) emoji = "🧙‍♀️";
                 else if (mName.includes("lizard") || mName.includes("saur")) emoji = "🦎";
-                
+
                 btnSpawn?.addEventListener("click", () => {
                     // Spawn token en el hex/celda más cercana al centro del viewport visible
                     const viewCanvasX = (-panX + viewport.clientWidth/2) / zoom;
@@ -5491,7 +5510,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const viewHex = isHexMode() ? getClosestHex(viewCanvasX, viewCanvasY) : null;
                     const viewX = viewHex ? viewHex.col + 0.5 : viewCanvasX / state.cellSize;
                     const viewY = viewHex ? viewHex.row + 0.5 : viewCanvasY / state.cellSize;
-                    
+
                     const hp = detail.hit_points || 15;
                     const newStamp = {
                         id: Date.now() + Math.random().toString(36).substr(2, 5),
@@ -5510,7 +5529,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         isSecret: false,
                         freePosition: false
                     };
-                    
+
                     state.stamps.push(newStamp);
                     selectedStampId = newStamp.id;
                     updateStampControlUI();
@@ -5518,14 +5537,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     draw();
                     alert(`Invocado token "${detail.name}" en el mapa.`);
                 });
-                
+
                 btnInit?.addEventListener("click", () => {
                     const roll = Math.floor(Math.random() * 20) + 1;
                     // Dexterity mod as initiative modifier
                     const dex = detail.dexterity || 10;
                     const mod = Math.floor((dex - 10) / 2);
                     const initVal = roll + mod;
-                    
+
                     addCreatureToInitiative(detail.name, initVal);
                     alert(`Añadido "${detail.name}" a Iniciativa (Tirada d20 + Mod = ${roll} + ${mod} = ${initVal}).`);
                 });
@@ -5553,9 +5572,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!promptText) return;
             appendChatMessage("Tú", promptText, true);
             aiChatInput.value = "";
-            
+
             const model = aiModelSelect.value;
-            
+
             if (model === "simulated") {
                 // Simulación offline
                 setTimeout(() => {
@@ -5564,11 +5583,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }, 800);
                 return;
             }
-            
+
             // Intentar conectar con Ollama
             appendChatMessage("Dungeon Master", "Pensando... 🧠", false);
             const thinkingMsg = aiChatMessages.lastChild;
-            
+
             try {
                 const response = await fetch("http://localhost:11434/api/chat", {
                     method: "POST",
@@ -5594,21 +5613,21 @@ document.addEventListener("DOMContentLoaded", () => {
                         stream: false
                     })
                 });
-                
+
                 if (!response.ok) throw new Error("Servidor Ollama no disponible");
-                
+
                 const data = await response.json();
                 thinkingMsg.remove(); // quitar mensaje "Pensando..."
-                
+
                 const reply = data.message?.content || "No obtuve respuesta del modelo.";
                 appendChatMessage("Dungeon Master", reply, false);
             } catch (err) {
                 // Quitar "Pensando..." y avisar del fallo
                 thinkingMsg.remove();
-                
+
                 const warningMsg = `⚠️ No se pudo conectar a Ollama en http://localhost:11434.\n\nError: ${err.message}.\nAsegúrate de tener Ollama instalado y ejecutándose localmente con el modelo '${model}' descargado (ej. 'ollama run ${model}').\n\n*Respuesta simulada para mantener el flujo de juego:*`;
                 appendChatMessage("Dungeon Master (Aviso)", warningMsg, false);
-                
+
                 // Fallback a simulación
                 const reply = getSimulatedReply(promptText);
                 appendChatMessage("Dungeon Master", reply, false);
@@ -5637,7 +5656,7 @@ document.addEventListener("DOMContentLoaded", () => {
         function getSimulatedReply(promptText) {
             const p = promptText.toLowerCase();
             const mapName = mapTemplateSelect.value || "dungeon";
-            
+
             // Detectar template actual incluyendo nuevos procedurales
             const dungeonTheme = mapName.includes(":") ? mapName.split(":")[1] : mapName;
 
@@ -5663,7 +5682,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     return "📖 *El pasillo de la mazmorra se abre ante vosotros...*\n\nLas baldosas de piedra fría están manchadas por la humedad de las profundidades del complejo. Muros de piedra maciza bloquean vuestro camino lateral, y un abismo insondable se abre al oeste, del cual surge un viento helado. Una puerta de madera reforzada con hierro cruje levemente a lo lejos. La niebla de guerra flota en las esquinas, ocultando los terrores que aguardan a quienes osen cruzar el umbral del calabozo.";
                 }
             }
-            
+
             // 2. Respuesta para "Sugerir encuentro"
             if (p.includes("encuentro") || p.includes("sugerir encuentro")) {
                 if (mapName === "ruins") {
@@ -5676,18 +5695,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     return "⚔️ *Sugerencia de Encuentro en la Mazmorra:*\n\n- **3 Goblins (CR 1/4)** emboscando desde detrás de las esquinas oscuras.\n- **1 Araña Gigante (CR 1)** que desciende del techo con telarañas que restringen el movimiento.\n\n*Consejo del DM:* Revela la niebla solo cuando los héroes utilicen antorchas o conjuros de luz.";
                 }
             }
-            
+
             // 3. Respuesta para "Reglas cobertura"
             if (p.includes("reglas de cobertura") || p.includes("cobertura") || p.includes("sigilo")) {
                 return "📖 *Reglas de Cobertura y Sigilo en D&D 5e:*\n\n- **Media Cobertura (+2 AC y tiradas de salvación de Dex):** Ocurre cuando un obstáculo (como un muro bajo o una mesa) cubre al menos la mitad del cuerpo del objetivo.\n- **Tres Cuartos (+5 AC y salvaciones de Dex):** Ocurre si el 75% del cuerpo está cubierto (por ejemplo, disparar desde detrás de una aspillera o columna gruesa).\n- **Cobertura Total:** El objetivo no puede ser atacado directamente con ataques a distancia o conjuros que requieran línea de visión.\n- **Sigilo:** Para ocultarse, un héroe debe romper la línea de visión total (niebla, muros o cobertura completa) y superar la Sabiduría Pasiva (Percepción) del enemigo con una tirada de Destreza (Sigilo).";
             }
-            
+
             // 4. Tiradas de dados o respuestas generales
             if (p.includes("dado") || p.includes("tirar") || p.includes("roll")) {
                 const roll = Math.floor(Math.random() * 20) + 1;
                 return `🎲 *Tirada del Destino:* He lanzado un dado de 20 por ti y el resultado es **${roll}** (Modificador no incluido).\n\nNarrativamente: ${roll >= 15 ? "Tu acción progresa de manera espectacular." : roll >= 8 ? "Logras tu objetivo, pero con un precio o complicación menor." : "El destino te es esquivo; algo sale mal y las consecuencias se complican."}`;
             }
-            
+
             // Respuesta genérica de Dungeon Master
             return "🧙 *Escucho tus palabras, aventurero...*\n\nLas sombras del calabozo se alargan y los hilos del destino giran. ¿Qué deseas hacer a continuación? Puedes pedirme que describa las salas, que genere adversarios o que te guíe a través de las intrincadas reglas del combate y la exploración.";
         }
@@ -5703,27 +5722,27 @@ document.addEventListener("DOMContentLoaded", () => {
             this.type = type; // 'rain', 'snow', or 'fog'
             this.particles = [];
             this.pool = [];
-            
+
             // Calculate dynamic max particles based on canvas area to avoid lag
             const areaScale = (canvas.width * canvas.height) / (1500 * 1200);
             const densityFactor = Math.min(4, Math.max(0.4, Math.sqrt(areaScale)));
             const baseParticles = type === 'rain' ? 120 : (type === 'snow' ? 80 : 12);
             this.maxParticles = Math.round(baseParticles * densityFactor);
-            
+
             this.init();
         }
-        
+
         init() {
             for (let i = 0; i < this.maxParticles; i++) {
                 this.particles.push(this.createParticle(true));
             }
         }
-        
+
         createParticle(randomY = false) {
             let p = this.pool.length > 0 ? this.pool.pop() : {};
             p.x = Math.random() * this.canvas.width;
             p.y = randomY ? Math.random() * this.canvas.height : -30;
-            
+
             if (this.type === 'rain') {
                 p.vx = 1 + Math.random() * 2; // wind drift
                 p.vy = 10 + Math.random() * 6; // speed
@@ -5750,11 +5769,11 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             return p;
         }
-        
+
         update() {
             for (let i = 0; i < this.particles.length; i++) {
                 let p = this.particles[i];
-                
+
                 if (this.type === 'rain') {
                     p.x += p.vx;
                     p.y += p.vy;
@@ -5773,7 +5792,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else if (this.type === 'fog') {
                     p.x += p.vx;
                     p.y += p.vy;
-                    
+
                     if (p.fadeIn) {
                         p.alpha += p.fadeSpeed;
                         if (p.alpha >= p.maxAlpha) {
@@ -5783,7 +5802,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     } else if (p.x > this.canvas.width - p.r) {
                         p.alpha -= p.fadeSpeed * 1.5;
                     }
-                    
+
                     if (p.alpha <= 0 || p.x > this.canvas.width + p.r) {
                         this.pool.push(p);
                         this.particles[i] = this.createParticle(false);
@@ -5791,7 +5810,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         }
-        
+
         draw(targetCtx) {
             targetCtx.save();
             if (this.type === 'rain') {
@@ -5820,7 +5839,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     grad.addColorStop(0, 'rgba(225, 230, 240, 0.75)');
                     grad.addColorStop(0.5, 'rgba(215, 220, 230, 0.25)');
                     grad.addColorStop(1, 'rgba(215, 220, 230, 0)');
-                    
+
                     targetCtx.fillStyle = grad;
                     targetCtx.beginPath();
                     targetCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -5836,12 +5855,12 @@ document.addEventListener("DOMContentLoaded", () => {
             animFrameId = null;
             return;
         }
-        
+
         if (weatherSystem) {
             weatherSystem.update();
         }
         draw();
-        
+
         animFrameId = requestAnimationFrame(animateWeather);
     }
 
@@ -5995,6 +6014,570 @@ document.addEventListener("DOMContentLoaded", () => {
         if (ws) ws.classList.toggle("exploration-mode", mode === "region");
     }
 
+    // ===================================================
+    // HIGH-DEFINITION CUSTOM ASSETS — INDEXEDDB & ZIP
+    // ===================================================
+    const DB_NAME = "MapForgeAssetsDB";
+    const DB_VERSION = 1;
+    let db = null;
+    const customImageUrls = new Map(); // assetId -> Blob URL
+    let selectedCustomPackId = null;
+
+    function openDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                const database = e.target.result;
+                if (!database.objectStoreNames.contains("packs")) {
+                    database.createObjectStore("packs", { keyPath: "id" });
+                }
+                if (!database.objectStoreNames.contains("assets")) {
+                    const assetStore = database.createObjectStore("assets", { keyPath: "id" });
+                    assetStore.createIndex("packId", "packId", { unique: false });
+                }
+            };
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                resolve(db);
+            };
+            request.onerror = (e) => {
+                console.error("Database open error:", e.target.error);
+                reject(e.target.error);
+            };
+        });
+    }
+
+    function savePack(pack) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(["packs"], "readwrite");
+            const req = transaction.objectStore("packs").put(pack);
+            req.onsuccess = () => resolve();
+            req.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    function saveAsset(asset) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(["assets"], "readwrite");
+            const req = transaction.objectStore("assets").put(asset);
+            req.onsuccess = () => resolve();
+            req.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    function getPacks() {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(["packs"], "readonly");
+            const req = transaction.objectStore("packs").getAll();
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    function getAssetsByPack(packId) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(["assets"], "readonly");
+            const index = transaction.objectStore("assets").index("packId");
+            const req = index.getAll(IDBKeyRange.only(packId));
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    function getAssetById(id) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(["assets"], "readonly");
+            const req = transaction.objectStore("assets").get(id);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    function deletePack(packId) {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(["packs", "assets"], "readwrite");
+            transaction.objectStore("packs").delete(packId);
+
+            const assetStore = transaction.objectStore("assets");
+            const index = assetStore.index("packId");
+            const reqCursor = index.openCursor(IDBKeyRange.only(packId));
+            reqCursor.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) {
+                    assetStore.delete(cursor.primaryKey);
+                    cursor.continue();
+                }
+            };
+
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    function getCustomAssetUrl(asset) {
+        if (customImageUrls.has(asset.id)) {
+            return customImageUrls.get(asset.id);
+        }
+        const url = URL.createObjectURL(asset.blob);
+        customImageUrls.set(asset.id, url);
+        return url;
+    }
+
+    async function restoreCustomAssets(stamps) {
+        if (!db) await openDatabase();
+        for (const s of stamps) {
+            if (s.customAssetId) {
+                try {
+                    const asset = await getAssetById(s.customAssetId);
+                    if (asset) {
+                        s.image = getCustomAssetUrl(asset);
+                    } else {
+                        console.warn("Asset not found in IndexedDB:", s.customAssetId);
+                    }
+                } catch (e) {
+                    console.error("Error restoring custom asset:", e);
+                }
+            }
+        }
+    }
+
+    async function renderCustomPacksList() {
+        const packsList = document.getElementById("customPacksList");
+        if (!packsList) return;
+        packsList.innerHTML = "";
+
+        const packs = await getPacks();
+        if (packs.length === 0) {
+            packsList.innerHTML = `<li class="empty-pack-msg">No hay packs personalizados cargados</li>`;
+            document.getElementById("customStampsGrid").innerHTML = "";
+            return;
+        }
+
+        packs.forEach(pack => {
+            const li = document.createElement("li");
+            if (pack.id === selectedCustomPackId) li.classList.add("active");
+
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "pack-name";
+            nameSpan.textContent = pack.name;
+            li.appendChild(nameSpan);
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "btn-delete-pack";
+            deleteBtn.innerHTML = "✖";
+            deleteBtn.title = "Eliminar Pack";
+            deleteBtn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                if (confirm(`¿Estás seguro de que quieres eliminar el pack "${pack.name}"?`)) {
+                    await deletePack(pack.id);
+                    if (selectedCustomPackId === pack.id) selectedCustomPackId = null;
+                    await renderCustomPacksList();
+                }
+            });
+            li.appendChild(deleteBtn);
+
+            li.addEventListener("click", () => {
+                selectedCustomPackId = pack.id;
+                document.querySelectorAll("#customPacksList li").forEach(el => el.classList.remove("active"));
+                li.classList.add("active");
+                renderCustomStampsGrid(pack.id);
+            });
+
+            packsList.appendChild(li);
+        });
+
+        if (!selectedCustomPackId && packs.length > 0) {
+            selectedCustomPackId = packs[0].id;
+            packsList.children[0].classList.add("active");
+        }
+
+        if (selectedCustomPackId) {
+            renderCustomStampsGrid(selectedCustomPackId);
+        }
+    }
+
+    async function renderCustomStampsGrid(packId) {
+        const grid = document.getElementById("customStampsGrid");
+        if (!grid) return;
+        grid.innerHTML = "";
+
+        const assets = await getAssetsByPack(packId);
+        if (assets.length === 0) {
+            grid.innerHTML = `<p style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 12px; grid-column: span 3;">Este pack no tiene imágenes válidas.</p>`;
+            return;
+        }
+
+        assets.forEach(asset => {
+            const url = getCustomAssetUrl(asset);
+
+            const item = document.createElement("div");
+            item.className = "stamp-item";
+            item.dataset.image = url;
+            item.dataset.name = asset.name.replace(/\.[^/.]+$/, "");
+            item.title = item.dataset.name;
+
+            const img = document.createElement("img");
+            img.src = url;
+            img.alt = item.dataset.name;
+            item.appendChild(img);
+
+            const label = document.createElement("small");
+            label.textContent = item.dataset.name.substring(0, 10);
+            item.appendChild(label);
+
+            item.addEventListener("click", () => {
+                document.querySelectorAll(".stamp-item").forEach(i => i.classList.remove("active"));
+                item.classList.add("active");
+
+                activeStamp = "";
+                activeStampImage = url;
+                activeCustomAssetId = asset.id;
+                activeStampName = item.dataset.name;
+                activeStampDescription = "Objeto personalizado HD";
+                selectedStampId = null;
+                updateStampControlUI();
+                draw();
+            });
+
+            grid.appendChild(item);
+        });
+    }
+
+    async function processZipFile(file) {
+        if (!file) return;
+
+        const packName = file.name.replace(/\.zip$/i, "");
+        const packId = "pack_" + Date.now();
+
+        try {
+            const zip = await JSZip.loadAsync(file);
+            const imageFiles = [];
+
+            zip.forEach((relativePath, fileInfo) => {
+                if (!fileInfo.dir && /\.(png|jpe?g|webp)$/i.test(relativePath)) {
+                    imageFiles.push(fileInfo);
+                }
+            });
+
+            if (imageFiles.length === 0) {
+                alert("El archivo .zip no contiene imágenes válidas (.png, .jpg, .jpeg, .webp).");
+                return;
+            }
+
+            // Save pack metadata
+            await savePack({ id: packId, name: packName, date: Date.now() });
+
+            // Save each asset
+            let importedCount = 0;
+            for (const fileInfo of imageFiles) {
+                const blob = await fileInfo.async("blob");
+                const fileName = fileInfo.name.split("/").pop();
+                const assetId = `asset_${packId}_${importedCount}_${Math.random().toString(36).substr(2, 5)}`;
+
+                await saveAsset({
+                    id: assetId,
+                    packId: packId,
+                    name: fileName,
+                    blob: blob
+                });
+                importedCount++;
+            }
+
+            alert(`¡Pack "${packName}" importado con éxito! Se cargaron ${importedCount} assets.`);
+            selectedCustomPackId = packId;
+            await renderCustomPacksList();
+        } catch (error) {
+            console.error("Error al procesar el archivo ZIP:", error);
+            alert("Error al procesar el archivo ZIP: " + error.message);
+        }
+    }
+
+    function setupCustomAssetsManager() {
+        const dropzone = document.getElementById("assetsDropzone");
+        const zipInput = document.getElementById("assetsZipInput");
+
+        if (!dropzone || !zipInput) return;
+
+        // Trigger file input dialog
+        dropzone.addEventListener("click", () => zipInput.click());
+
+        zipInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            processZipFile(file);
+            zipInput.value = ""; // Clear
+        });
+
+        // Drag and drop events
+        ["dragenter", "dragover"].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add("dragover");
+            }, false);
+        });
+
+        ["dragleave", "drop"].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove("dragover");
+            }, false);
+        });
+
+        dropzone.addEventListener("drop", (e) => {
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith(".zip")) {
+                processZipFile(file);
+            } else {
+                alert("Por favor, suelta un archivo .zip válido.");
+            }
+        });
+
+        // Initial load of imported packs
+        openDatabase().then(() => {
+            renderCustomPacksList();
+        });
+    }
+
+    // ===================================================
+    // AMBIENT SOUNDBOARD & AUDIO MIXER
+    // ===================================================
+    const AudioManager = {
+        masterVolume: 0.8,
+        musicVolume: 0.7,
+        ambianceVolume: 0.6,
+        sfxVolume: 0.8,
+
+        musicA: new Audio(),
+        musicB: new Audio(),
+        currentMusicChannel: 'A',
+        musicFadeInterval: null,
+
+        ambiance: new Audio(),
+
+        playSfx(url) {
+            const sfx = new Audio(url);
+            sfx.volume = this.sfxVolume * this.masterVolume;
+            sfx.play().catch(err => console.log("SFX autoplay blocked:", err));
+        },
+
+        init() {
+            this.musicA.loop = true;
+            this.musicB.loop = true;
+            this.ambiance.loop = true;
+        },
+
+        updateVolumes() {
+            const musicVol = this.musicVolume * this.masterVolume;
+            const ambianceVol = this.ambianceVolume * this.masterVolume;
+
+            if (this.currentMusicChannel === 'A') {
+                this.musicA.volume = musicVol;
+                this.musicB.volume = 0;
+            } else {
+                this.musicB.volume = musicVol;
+                this.musicA.volume = 0;
+            }
+
+            this.ambiance.volume = ambianceVol;
+        },
+
+        stopMusic() {
+            clearInterval(this.musicFadeInterval);
+            this.fadeAudioToPause(this.musicA);
+            this.fadeAudioToPause(this.musicB);
+            document.querySelectorAll("#musicTrackList .audio-track-item").forEach(item => item.classList.remove("active"));
+        },
+
+        stopAmbiance() {
+            this.ambiance.pause();
+            document.querySelectorAll("#ambianceTrackList .audio-track-item").forEach(item => item.classList.remove("active"));
+        },
+
+        fadeAudioToPause(audio) {
+            if (audio.paused) return;
+            let vol = audio.volume;
+            const fadeInterval = setInterval(() => {
+                vol -= 0.05;
+                if (vol <= 0) {
+                    clearInterval(fadeInterval);
+                    audio.pause();
+                    audio.volume = 0;
+                } else {
+                    audio.volume = Math.max(0, vol);
+                }
+            }, 50);
+        },
+
+        playMusic(url) {
+            clearInterval(this.musicFadeInterval);
+
+            const targetVolume = this.musicVolume * this.masterVolume;
+            const fadeSteps = 30; // 1.5s transition
+            const volStep = targetVolume / fadeSteps;
+
+            let activeAudio, inactiveAudio;
+            if (this.currentMusicChannel === 'A') {
+                activeAudio = this.musicA;
+                inactiveAudio = this.musicB;
+                this.currentMusicChannel = 'B';
+            } else {
+                activeAudio = this.musicB;
+                inactiveAudio = this.musicA;
+                this.currentMusicChannel = 'A';
+            }
+
+            inactiveAudio.src = url;
+            inactiveAudio.volume = 0;
+
+            const playPromise = inactiveAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(err => console.log("Music play blocked:", err));
+            }
+
+            let step = 0;
+            this.musicFadeInterval = setInterval(() => {
+                step++;
+
+                if (!activeAudio.paused && activeAudio.volume > 0) {
+                    activeAudio.volume = Math.max(0, activeAudio.volume - volStep);
+                }
+
+                if (inactiveAudio.volume < targetVolume) {
+                    inactiveAudio.volume = Math.min(targetVolume, inactiveAudio.volume + volStep);
+                }
+
+                if (step >= fadeSteps) {
+                    clearInterval(this.musicFadeInterval);
+                    activeAudio.pause();
+                    activeAudio.volume = 0;
+                    inactiveAudio.volume = targetVolume;
+                }
+            }, 50);
+        },
+
+        playAmbiance(url) {
+            const targetVolume = this.ambianceVolume * this.masterVolume;
+            this.ambiance.src = url;
+            this.ambiance.volume = targetVolume;
+            const playPromise = this.ambiance.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(err => console.log("Ambiance play blocked:", err));
+            }
+        }
+    };
+
+    function setupAudioManager() {
+        AudioManager.init();
+
+        const audioMasterVol = document.getElementById("audioMasterVol");
+        const audioMasterVolVal = document.getElementById("audioMasterVolVal");
+        if (audioMasterVol && audioMasterVolVal) {
+            audioMasterVol.addEventListener("input", (e) => {
+                const val = parseFloat(e.target.value);
+                AudioManager.masterVolume = val;
+                audioMasterVolVal.textContent = `${Math.round(val * 100)}%`;
+                AudioManager.updateVolumes();
+            });
+        }
+
+        const audioMusicVol = document.getElementById("audioMusicVol");
+        const audioMusicVolVal = document.getElementById("audioMusicVolVal");
+        if (audioMusicVol && audioMusicVolVal) {
+            audioMusicVol.addEventListener("input", (e) => {
+                const val = parseFloat(e.target.value);
+                AudioManager.musicVolume = val;
+                audioMusicVolVal.textContent = `${Math.round(val * 100)}%`;
+                AudioManager.updateVolumes();
+            });
+        }
+
+        const audioAmbianceVol = document.getElementById("audioAmbianceVol");
+        const audioAmbianceVolVal = document.getElementById("audioAmbianceVolVal");
+        if (audioAmbianceVol && audioAmbianceVolVal) {
+            audioAmbianceVol.addEventListener("input", (e) => {
+                const val = parseFloat(e.target.value);
+                AudioManager.ambianceVolume = val;
+                audioAmbianceVolVal.textContent = `${Math.round(val * 100)}%`;
+                AudioManager.updateVolumes();
+            });
+        }
+
+        const audioSfxVol = document.getElementById("audioSfxVol");
+        const audioSfxVolVal = document.getElementById("audioSfxVolVal");
+        if (audioSfxVol && audioSfxVolVal) {
+            audioSfxVol.addEventListener("input", (e) => {
+                const val = parseFloat(e.target.value);
+                AudioManager.sfxVolume = val;
+                audioSfxVolVal.textContent = `${Math.round(val * 100)}%`;
+            });
+        }
+
+        const btnStopMusic = document.getElementById("btnStopMusic");
+        if (btnStopMusic) {
+            btnStopMusic.addEventListener("click", () => AudioManager.stopMusic());
+        }
+        const btnStopAmbiance = document.getElementById("btnStopAmbiance");
+        if (btnStopAmbiance) {
+            btnStopAmbiance.addEventListener("click", () => AudioManager.stopAmbiance());
+        }
+
+        function bindTrackListEvents(listId, playFn) {
+            const list = document.getElementById(listId);
+            if (!list) return;
+
+            list.addEventListener("click", (e) => {
+                const item = e.target.closest(".audio-track-item");
+                if (!item) return;
+
+                list.querySelectorAll(".audio-track-item").forEach(el => el.classList.remove("active"));
+                item.classList.add("active");
+
+                const url = item.dataset.url;
+                playFn(url);
+            });
+        }
+
+        bindTrackListEvents("musicTrackList", (url) => AudioManager.playMusic(url));
+        bindTrackListEvents("ambianceTrackList", (url) => AudioManager.playAmbiance(url));
+
+        const sfxGrid = document.querySelector(".audio-sfx-grid");
+        if (sfxGrid) {
+            sfxGrid.addEventListener("click", (e) => {
+                const btn = e.target.closest(".sfx-btn");
+                if (!btn) return;
+
+                const url = btn.dataset.url;
+                AudioManager.playSfx(url);
+            });
+        }
+
+        const customAudioFilesInput = document.getElementById("customAudioFiles");
+        const musicTrackList = document.getElementById("musicTrackList");
+
+        if (customAudioFilesInput && musicTrackList) {
+            customAudioFilesInput.addEventListener("change", (e) => {
+                const files = e.target.files;
+                if (!files || files.length === 0) return;
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const url = URL.createObjectURL(file);
+
+                    const li = document.createElement("li");
+                    li.className = "audio-track-item";
+                    li.dataset.url = url;
+                    li.dataset.name = file.name;
+                    li.textContent = `🎵 ${file.name.replace(/\.[^/.]+$/, "")}`;
+
+                    musicTrackList.appendChild(li);
+                }
+
+                customAudioFilesInput.value = "";
+            });
+        }
+    }
+
     // --- BOOTSTRAP ---
     function bootstrap() {
         init();
@@ -6002,6 +6585,8 @@ document.addEventListener("DOMContentLoaded", () => {
         setupRightPanel();
         drawInitiativeList();
         updateWeatherSystem();
+        setupCustomAssetsManager();
+        setupAudioManager();
 
         // Auto-load exploration template on startup (no confirm dialog)
         loadPresetTemplate("tradeRoute");

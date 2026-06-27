@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="assets/rpg-awesome/rpg-awesome.min.css">
     <script src="assets/rot.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- Google Fonts: Outfit (modern UI) & Cinzel (medieval heading style) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,7 +50,7 @@
                         <option value="cave">Gruta de la Lava (Combate)</option>
                     </select>
                 </div>
-                
+
                 <div class="select-wrapper">
                     <select id="mapMode" title="Cambiar modo de rejilla y escalas">
                         <option value="combat">⚔️ Rejilla Cuadrada (Combate)</option>
@@ -65,7 +66,7 @@
                     </select>
                 </div>
             </div>
-            
+
             <div class="quick-actions">
                 <button id="btnUndo" class="btn-icon" title="Deshacer (Ctrl+Z)" disabled>↩️</button>
                 <button id="btnRedo" class="btn-icon" title="Rehacer (Ctrl+Y)" disabled>↪️</button>
@@ -121,11 +122,11 @@
 
                 <!-- DYNAMIC PANEL (Changes depending on selected tool) -->
                 <div class="panel-content" id="toolOptionsPanel">
-                    
+
                     <!-- OPTIONS: TERRAIN -->
                     <div class="options-group" id="optionsTerrain" style="display: none;">
                         <h3>Tipo de Terreno</h3>
-                        
+
                         <!-- Combat Terrain Picker -->
                         <div class="terrain-picker" id="combatTerrains">
                             <div class="terrain-option active" data-terrain="stone" style="--bg: #4b525d;">
@@ -190,7 +191,7 @@
                                 <span class="label">Río</span>
                             </div>
                         </div>
-                        
+
                         <div class="brush-settings">
                             <h4>Modo de pintado</h4>
                             <div class="btn-group">
@@ -234,6 +235,7 @@
                             <button class="tab-btn" data-tab="tabMapIcons">🗺️Mapa</button>
                             <button class="tab-btn" data-tab="tabGameIcons">⚔️Gfx</button>
                             <button class="tab-btn" data-tab="tabSymbols">Heral.</button>
+                            <button class="tab-btn" data-tab="tabCustomAssets" title="Importar Packs HD de Assets">📦Packs HD</button>
                         </div>
 
                         <!-- TAB CONTENT: TOKENS -->
@@ -500,6 +502,32 @@
                             </div>
                         </div>
 
+                        <!-- TAB CONTENT: HIGH-DEFINITION CUSTOM ASSETS (ZIP IMPORT) -->
+                        <div class="tab-content" id="tabCustomAssets">
+                            <p style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">Arrastra un archivo .zip con imágenes PNG/WebP para cargarlas localmente en tu biblioteca.</p>
+
+                            <!-- Dropzone -->
+                            <div class="assets-dropzone" id="assetsDropzone">
+                                <i class="ra ra-lg ra-dread-knot"></i>
+                                <span>Suelta tu archivo .zip aquí</span>
+                                <small>o haz clic para seleccionar</small>
+                                <input type="file" id="assetsZipInput" accept=".zip" style="display: none;">
+                            </div>
+
+                            <!-- Packs Selector list -->
+                            <div class="packs-list-container">
+                                <h4>Packs Importados</h4>
+                                <ul class="packs-list" id="customPacksList">
+                                    <li class="empty-pack-msg">No hay packs personalizados cargados</li>
+                                </ul>
+                            </div>
+
+                            <!-- Custom Stamps Grid -->
+                            <div class="stamps-grid" id="customStampsGrid">
+                                <!-- Dynamic imported stamps will go here -->
+                            </div>
+                        </div>
+
                         <!-- SELECTED STAMP OPTIONS (TOKEN CONFIGURATION) -->
                         <div class="selected-stamp-controls" id="stampEditControls" style="display: none;">
                             <h4>Objeto Seleccionado</h4>
@@ -530,7 +558,7 @@
                                 <input type="checkbox" id="tokenShowDescToPlayers" style="accent-color: var(--primary); width:16px; height:16px;">
                             </div>
                             <div class="divider-horizontal" style="margin: 10px 0;"></div>
-                            
+
                             <!-- TOKEN RULES -->
                             <div class="setting-item">
                                 <label>Ficha D&D:</label>
@@ -582,7 +610,7 @@
                             </div>
 
                             <button class="btn btn-secondary btn-small" id="btnAddToInitiative" style="width: 100%; margin-top: 10px;">⚔️ Añadir a Iniciativa</button>
-                            
+
                             <div class="btn-group" style="margin-top: 10px;">
                                 <button class="btn btn-danger btn-small" id="btnDeleteStamp">Eliminar</button>
                                 <button class="btn btn-secondary btn-small" id="btnDuplicateStamp">Duplicar</button>
@@ -627,9 +655,9 @@
                             <button class="btn btn-secondary btn-small" id="btnFogAll">Cubrir Todo</button>
                             <button class="btn btn-secondary btn-small" id="btnFogClear">Revelar Todo</button>
                         </div>
-                        
+
                         <div class="divider-horizontal" style="margin: 15px 0;"></div>
-                        
+
                         <div class="setting-item">
                             <label for="chkDynamicFog" style="font-weight: 600; color: var(--primary);">Niebla Dinámica (Visión):</label>
                             <input type="checkbox" id="chkDynamicFog" checked>
@@ -652,7 +680,7 @@
                             <input type="number" id="gridRows" min="5" max="80" value="20">
                         </div>
                         <button class="btn btn-primary" id="btnApplyGridSize" style="width: 100%; margin-top: 10px;">Aplicar Tamaño</button>
-                        
+
                         <div class="setting-item" style="margin-top: 15px;">
                             <label for="chkShowGrid">Mostrar Rejilla:</label>
                             <input type="checkbox" id="chkShowGrid" checked>
@@ -806,7 +834,7 @@
             <aside class="sidebar-right" id="rightPanel">
                 <!-- Toggle handle button -->
                 <button id="btnToggleRightPanel" class="toggle-right-btn" title="Alternar panel de campaña">◀</button>
-                
+
                 <div class="right-panel-container">
                     <!-- Tabs Header -->
                     <div class="right-tabs">
@@ -815,8 +843,9 @@
                         <button class="right-tab-btn" data-tab="tabCompendium" title="Compendio D&D 5e">📖 Bestiario</button>
                         <button class="right-tab-btn" data-tab="tabNotes" title="Notas de Campaña">📝 Notas</button>
                         <button class="right-tab-btn" data-tab="tabLibrary" title="Biblioteca de Mapas">📁 Mapas</button>
+                        <button class="right-tab-btn" data-tab="tabAudio" title="Música y Sonido">🔊 Audio</button>
                     </div>
-                    
+
                     <div class="right-panel-content">
                         <!-- TAB: IA MASTER -->
                         <div class="right-tab-content active" id="tabIaMaster">
@@ -846,7 +875,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- TAB: ENCOUNTER GENERATOR -->
                         <div class="right-tab-content" id="tabEncounter">
                             <div class="encounter-generator">
@@ -944,7 +973,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- TAB: CAMPAIGN NOTES -->
                         <div class="right-tab-content" id="tabNotes">
                             <div class="notes-container">
@@ -954,7 +983,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- TAB: LOCAL LIBRARY -->
                         <div class="right-tab-content" id="tabLibrary">
                             <div class="library-container">
@@ -965,6 +994,88 @@
                                 <div class="library-list" id="libraryList">
                                     <div class="lib-placeholder">No hay mapas guardados en el navegador...</div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: SOUNDBOARD & MUSIC PLAYER -->
+                        <div class="right-tab-content" id="tabAudio">
+                            <div class="audio-mixer-container">
+
+                                <!-- Master Volume Slider -->
+                                <div class="audio-control-item master-volume">
+                                    <label>🔊 Volumen Master:</label>
+                                    <input type="range" id="audioMasterVol" min="0" max="1" step="0.05" value="0.8">
+                                    <span id="audioMasterVolVal">80%</span>
+                                </div>
+
+                                <div class="divider-horizontal" style="margin: 12px 0;"></div>
+
+                                <!-- Music Playlist -->
+                                <div class="audio-section">
+                                    <div class="audio-section-header">
+                                        <h4>🎼 Música de Fondo</h4>
+                                        <button id="btnStopMusic" class="btn btn-secondary btn-small" title="Pausar Música">⏸️</button>
+                                    </div>
+                                    <div class="audio-control-item sub-volume">
+                                        <label>Volumen:</label>
+                                        <input type="range" id="audioMusicVol" min="0" max="1" step="0.05" value="0.7">
+                                        <span id="audioMusicVolVal">70%</span>
+                                    </div>
+                                    <ul class="audio-track-list" id="musicTrackList">
+                                        <li class="audio-track-item" data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" data-name="Exploración - Reino Épico">🌲 Exploración - Reino Épico</li>
+                                        <li class="audio-track-item" data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" data-name="Combate - Tensión Máxima">⚔️ Combate - Tensión Máxima</li>
+                                        <li class="audio-track-item" data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" data-name="Misterio - Criptas Oscuras">💀 Misterio - Criptas Oscuras</li>
+                                        <li class="audio-track-item" data-url="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" data-name="Taberna - Brindis Alegre">🍺 Taberna - Brindis Alegre</li>
+                                    </ul>
+
+                                    <!-- User Custom Tracks Upload -->
+                                    <div class="custom-audio-upload">
+                                        <label for="customAudioFiles" class="btn btn-secondary btn-small" style="display: block; text-align: center; cursor: pointer; margin-top: 8px;">📂 Cargar tus MP3...</label>
+                                        <input type="file" id="customAudioFiles" accept="audio/*" multiple style="display: none;">
+                                    </div>
+                                </div>
+
+                                <div class="divider-horizontal" style="margin: 12px 0;"></div>
+
+                                <!-- Environmental Ambiance Loops -->
+                                <div class="audio-section">
+                                    <div class="audio-section-header">
+                                        <h4>🌧️ Efectos de Ambiente</h4>
+                                        <button id="btnStopAmbiance" class="btn btn-secondary btn-small" title="Pausar Ambiente">⏸️</button>
+                                    </div>
+                                    <div class="audio-control-item sub-volume">
+                                        <label>Volumen:</label>
+                                        <input type="range" id="audioAmbianceVol" min="0" max="1" step="0.05" value="0.6">
+                                        <span id="audioAmbianceVolVal">60%</span>
+                                    </div>
+                                    <ul class="audio-track-list" id="ambianceTrackList">
+                                        <li class="audio-track-item" data-url="https://assets.mixkit.co/active_storage/sfx/2433/2433-84.wav" data-name="Lluvia Torrencial">🌧️ Lluvia Torrencial</li>
+                                        <li class="audio-track-item" data-url="https://assets.mixkit.co/active_storage/sfx/2438/2438-84.wav" data-name="Hoguera Crepitante">🔥 Hoguera Crepitante</li>
+                                        <li class="audio-track-item" data-url="https://assets.mixkit.co/active_storage/sfx/1944/1944-84.wav" data-name="Viento Aullador">💨 Viento Aullador</li>
+                                        <li class="audio-track-item" data-url="https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav" data-name="Eco en la Cueva">🕳️ Eco en la Cueva</li>
+                                    </ul>
+                                </div>
+
+                                <div class="divider-horizontal" style="margin: 12px 0;"></div>
+
+                                <!-- SFX Soundboard Matrix -->
+                                <div class="audio-section">
+                                    <h4>⚔️ Soundboard (Efectos Cortos)</h4>
+                                    <div class="audio-control-item sub-volume" style="margin-bottom: 8px;">
+                                        <label>Volumen:</label>
+                                        <input type="range" id="audioSfxVol" min="0" max="1" step="0.05" value="0.8">
+                                        <span id="audioSfxVolVal">80%</span>
+                                    </div>
+                                    <div class="audio-sfx-grid">
+                                        <button class="btn btn-secondary sfx-btn" data-url="https://assets.mixkit.co/active_storage/sfx/2040/2040-84.wav">⚔️ Ataque</button>
+                                        <button class="btn btn-secondary sfx-btn" data-url="https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav">🔥 Conjuro</button>
+                                        <button class="btn btn-secondary sfx-btn" data-url="https://assets.mixkit.co/active_storage/sfx/2017/2017-84.wav">💥 Impacto</button>
+                                        <button class="btn btn-secondary sfx-btn" data-url="https://assets.mixkit.co/active_storage/sfx/2566/2566-84.wav">🎲 Dados</button>
+                                        <button class="btn btn-secondary sfx-btn" data-url="https://assets.mixkit.co/active_storage/sfx/1653/1653-84.wav">🪙 Monedas</button>
+                                        <button class="btn btn-secondary sfx-btn" data-url="https://assets.mixkit.co/active_storage/sfx/2403/2403-84.wav">🚪 Puerta</button>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>

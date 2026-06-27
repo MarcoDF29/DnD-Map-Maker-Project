@@ -1,0 +1,79 @@
+# DnD Map Maker Project
+
+MapForge is a local browser-based D&D map maker and lightweight VTT playground for building scenes, placing tokens, testing fog of war, rolling dice, and experimenting with open-source fantasy assets.
+
+This is a personal/local project for tabletop sessions with friends. Treat the current version as an active prototype.
+
+## Quick Start
+
+```bash
+git clone https://github.com/MarcoDF29/DnD-Map-Maker-Project.git
+cd DnD-Map-Maker-Project
+python -m http.server 8099
+```
+
+Open:
+
+```text
+http://localhost:8099
+```
+
+Any static server works. The app is vanilla HTML/CSS/JS, so there is no npm install step.
+
+## Current Highlights
+
+- Square, hex, and region map modes.
+- Built-in templates for dungeons, forests, caves, taverns, ruins, and regional exploration.
+- Terrain painting, walls, fog of war, ruler, stamps, tokens, and initiative tracker.
+- Animated dice roller with an on-map roll overlay.
+- GM/player view toggle.
+- JSON save/load and PNG export.
+- Local map library in the browser.
+- Compendium/search panel and simulated DM assistant panel.
+- DawnLike sprite picker with 1300+ pixel-art sprites.
+- Game-icons, RPG Awesome, Azgaar heraldic symbols, map icons, and local battlemaps.
+- Experimental HD asset pack import from `.zip` files using browser IndexedDB.
+- Experimental VTT-oriented export/import work.
+
+## Suggested Test Flow
+
+1. Load a preset map.
+2. Switch between square, hex, and region modes.
+3. Paint terrain and draw walls.
+4. Open `Objetos` and try the `DL` DawnLike tab.
+5. Place tokens, HD stamps, map icons, and symbols.
+6. Move, rotate, duplicate, and delete stamps.
+7. Try fog of war and GM/player view.
+8. Roll dice and confirm the on-map animation.
+9. Save JSON, reload it, and export PNG.
+10. Try the local library save/load flow.
+
+Use [FEEDBACK_CHECKLIST.md](FEEDBACK_CHECKLIST.md) for a structured review.
+
+## Collaboration Notes
+
+- Main app files: `index.html`, `style.css`, `app.js`.
+- Bundled assets live in `assets/`.
+- `local-assets/` is intentionally ignored because it may contain downloaded material without clear redistribution rights.
+- Keep new third-party assets documented in [THIRD_PARTY_ATTRIBUTIONS.md](THIRD_PARTY_ATTRIBUTIONS.md).
+- Do not add a repository-wide license until the bundled third-party asset situation is fully audited.
+
+## Licensing Status
+
+This repository currently bundles assets and code from multiple sources with different licenses. The project is suitable for private/local testing, but it is not ready for commercial redistribution.
+
+Before publishing a public release, review:
+
+- DawnLike CC BY-SA 3.0 share-alike implications.
+- Game-icons.net CC BY 3.0 attribution.
+- Azgaar heraldic SVG metadata, including some CC BY-NC-SA/GFDL sources.
+- OGL/SRD content inside `assets/monsters.json`.
+- Any generated or downloaded HD image assets.
+
+See [THIRD_PARTY_ATTRIBUTIONS.md](THIRD_PARTY_ATTRIBUTIONS.md) for current notes.
+
+## Research And Roadmap
+
+- [research-mapforge-opportunities.md](research-mapforge-opportunities.md): open-source/VTT research notes.
+- [ROADMAP.md](ROADMAP.md): practical next steps.
+- [open-source-integration.md](open-source-integration.md): earlier source review notes.

@@ -1,56 +1,103 @@
 # Third-party attributions
 
-## Azgaar/Fantasy-Map-Generator
+This project is currently a private/local D&D table tool prototype. It bundles material with different licenses. Do not assume the repository as a whole is ready for commercial use or broad redistribution until this file is audited again.
 
-- Source: https://github.com/Azgaar/Fantasy-Map-Generator
+## DawnLike sprites
+
+- Source: https://opengameart.org/content/dawnlike-16x16-universal-rogue-like-tileset-v181
+- Author: DragonDePlatino
+- License: CC BY-SA 3.0
+- Local files:
+  - `assets/dawnlike/Characters/*.png`
+  - `assets/dawnlike/Items/*.png`
+- Usage: DawnLike sprite picker (`DL`) for tokens, monsters, items, weapons, potions, and props.
+
+Attribution: DawnLike 16x16 Universal Rogue-like Tileset by DragonDePlatino, licensed under CC BY-SA 3.0.
+
+## game-icons.net
+
+- Source: https://game-icons.net/
+- Authors: Delapouite, Lorc, and contributors
+- License: CC BY 3.0
+- Local files:
+  - `assets/game-icons/*.svg`
+- Usage: vector map-location and fantasy stamps.
+
+Attribution: Icons from game-icons.net by Delapouite, Lorc, and contributors, licensed under CC BY 3.0.
+
+## RPG Awesome icon font
+
+- Source: https://github.com/nagoshiashumari/Rpg-Awesome
+- License: see bundled font/CSS metadata and upstream repository
+- Local files:
+  - `assets/rpg-awesome/*`
+- Usage: RPG/fantasy UI icons.
+
+## rot.js
+
+- Source: https://github.com/ondras/rot.js
+- License: BSD-3-Clause
+- Local files:
+  - `assets/rot.min.js`
+- Usage: field-of-view / roguelike utility foundation for map visibility work.
+
+## JSZip
+
+- Source: https://stuk.github.io/jszip/
 - License: MIT
-- Copyright: 2017-2024 Max Haniyeu (Azgaar)
+- Current usage:
+  - Loaded from CDN in `index.html`.
+  - Used by the experimental `.zip` HD asset-pack importer.
+
+Note: for better offline behavior, vendor a reviewed local copy before treating ZIP import as production-ready.
+
+## Azgaar/Fantasy-Map-Generator and heraldic charges
+
+- Source repository: https://github.com/Azgaar/Fantasy-Map-Generator
+- Repository license: MIT
 - Local files:
   - `assets/azgaar-charges/*.svg`
+- Usage: heraldic/map symbol stamps.
 
-The copied SVG heraldic charges are used as local map-symbol stamps. They have not been modified beyond being displayed with CSS filters in the MapForge UI.
-
-MIT license text from the source repository:
-
-```text
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-```
+Important license note: the Azgaar repository is MIT, but many individual SVG files contain embedded metadata pointing to original sources such as WappenWiki, Wikimedia Commons, CC BY-SA, CC BY-NC-SA, GFDL, or public-domain/CC0 sources. Treat this folder as mixed-license art. Keep individual SVG metadata intact and do not use these files commercially until each symbol is audited or replaced with CC0/MIT alternatives.
 
 ## MlakarT/DnD-project
 
 - Source: https://github.com/MlakarT/DnD-project
 - License: MIT
-- Copyright: 2022 Mlakar
 - Local reference copy:
-  - `local-assets/DnD-project-main/`
+  - `local-assets/DnD-project-main/` (ignored by git)
 - Ported/adapted logic:
-  - `generateProceduralDungeon()` in `app.js`
+  - procedural dungeon/path generation concepts in `app.js`
 
-The procedural dungeon generator in MapForge adapts the original project's seed/path idea and Numerical Recipes LCG approach into browser-side JavaScript, with MapForge-specific terrain, fog, stamps, and lore.
+The procedural dungeon generator adapts the seed/path idea into MapForge-specific browser-side JavaScript with its own terrain, fog, stamps, and lore integration.
 
-## RPG Awesome Icon Font
-- **Source:** https://github.com/nagoshiashumari/Rpg-Awesome
-- **License:** BSD-2-Clause
-- **Usage:** Tool button icons in sidebar (Navigate, Terrain, Walls, Objects, Fog, Ruler)
-- **Files:** assets/rpg-awesome/
+## D&D / SRD / OGL-derived monster data
 
-## rot.js
-- **Source:** https://github.com/ondras/rot.js
-- **License:** BSD-3-Clause
-- **Usage:** RecursiveShadowcasting FOV engine for dungeon line-of-sight
-- **Files:** assets/rot.min.js
+- Local file:
+  - `assets/monsters.json`
+- Usage: compendium/search data.
+- License signal: file contains Open Game License text.
 
-## game-icons.net
-- **Authors:** Delapouite, Lorc, and contributors — https://game-icons.net
-- **License:** CC BY 3.0 — https://creativecommons.org/licenses/by/3.0/
-- **Attribution required:** "Icons from game-icons.net by Delapouite and Lorc"
-- **Usage:** Map location stamps (castle, village, cave, mine, dungeon, etc.)
-- **Files:** assets/game-icons/
+Do not mix product identity or proprietary D&D Beyond/Wizards text into this file. Keep OGL/SRD notice text intact and audit the source before public redistribution.
+
+## Map icons and generated/curated images
+
+- Local files:
+  - `assets/map-icons/*.png`
+  - `assets/battlemap_forest.png`
+  - `assets/battlemap_lava.png`
+  - `assets/fantasy_bg.jpg`
+  - `assets/parchment-title.png`
+  - `assets/campfire_stamp.png`
+  - `assets/dnd_dragon_token.png`
+  - `assets/dnd_treasure_chest.png`
+
+These assets need final source/license verification before public or commercial redistribution. They are acceptable for private/local testing in the current project context, but should be replaced, documented, or removed before a public release.
+
+## Local-only downloaded assets
+
+- Folder:
+  - `local-assets/`
+
+This folder is intentionally ignored by git. It may contain downloaded zips or reference material without clear redistribution rights.
