@@ -508,7 +508,7 @@
 
                         <!-- TAB CONTENT: HIGH-DEFINITION CUSTOM ASSETS (ZIP IMPORT) -->
                         <div class="tab-content" id="tabCustomAssets">
-                            <p style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">Arrastra un archivo .zip con imágenes PNG/WebP para cargarlas localmente en tu biblioteca.</p>
+                            <p style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">Importa bundles HD locales. MapForge detecta carpetas como floors, walls, objects, overlays, structures y tokens.</p>
 
                             <!-- Dropzone -->
                             <div class="assets-dropzone" id="assetsDropzone">
@@ -524,6 +524,22 @@
                                 <ul class="packs-list" id="customPacksList">
                                     <li class="empty-pack-msg">No hay packs personalizados cargados</li>
                                 </ul>
+                            </div>
+
+                            <div class="asset-library-controls" id="assetLibraryControls" style="display: none;">
+                                <input type="search" id="customAssetSearch" placeholder="Buscar asset, carpeta, tag...">
+                                <div class="asset-category-filters" id="customAssetCategoryFilters">
+                                    <button class="active" data-category="all">Todo</button>
+                                    <button data-category="background">Fondos</button>
+                                    <button data-category="floor">Pisos</button>
+                                    <button data-category="wall">Muros</button>
+                                    <button data-category="structure">Estructuras</button>
+                                    <button data-category="object">Objetos</button>
+                                    <button data-category="nature">Naturaleza</button>
+                                    <button data-category="overlay">Overlays</button>
+                                    <button data-category="token">Tokens</button>
+                                </div>
+                                <div class="asset-library-summary" id="customAssetSummary">Sin pack seleccionado</div>
                             </div>
 
                             <!-- Custom Stamps Grid -->

@@ -3,6 +3,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- DOM ELEMENTS ---
     const canvas = document.getElementById("mapCanvas");
     const ctx = canvas.getContext("2d");
+
+    // --- PROCEDURAL HD TEXTURE PATTERNS ---
+    const terrainPatterns = {};
     const viewport = document.getElementById("canvasViewport");
 
     const btnUndo = document.getElementById("btnUndo");
@@ -109,6 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fog: [],      // cols * rows (booleans)
         initiative: [], // {id, name, value}
         bgImage: "",
+        bgCustomAssetId: null,
         bgScale: 1.0,
         bgX: 0,
         bgY: 0,
@@ -703,6 +707,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- INITIALIZE APP ---
     function init() {
+        initProceduralTextures();
         resizeCanvas();
         initMapState(state.cols, state.rows);
         centerMap();
@@ -757,6 +762,7 @@ document.addEventListener("DOMContentLoaded", () => {
             fog: state.fog,
             initiative: state.initiative,
             bgImage: state.bgImage,
+            bgCustomAssetId: state.bgCustomAssetId,
             bgScale: state.bgScale,
             bgX: state.bgX,
             bgY: state.bgY,
@@ -825,6 +831,7 @@ document.addEventListener("DOMContentLoaded", () => {
         state.fog = parsed.fog;
         state.initiative = parsed.initiative || [];
         state.bgImage = parsed.bgImage || "";
+        state.bgCustomAssetId = parsed.bgCustomAssetId || null;
         state.bgScale = parsed.bgScale !== undefined ? parsed.bgScale : 1.0;
         state.bgX = parsed.bgX !== undefined ? parsed.bgX : 0;
         state.bgY = parsed.bgY !== undefined ? parsed.bgY : 0;
@@ -892,7 +899,9 @@ document.addEventListener("DOMContentLoaded", () => {
         updateTransform();
         drawInitiativeList();
 
-        restoreCustomAssets(state.stamps).then(() => draw());
+        restoreCustomAssets(state.stamps)
+            .then(() => restoreCustomBackground())
+            .then(() => draw());
     }
 
     function updateHistoryButtons() {
@@ -1766,31 +1775,32 @@ document.addEventListener("DOMContentLoaded", () => {
                     let strokeStyle = (mode === "region") ? "rgba(0, 0, 0, 0.04)" : "rgba(0, 0, 0, 0.15)";
 
                     if (mode === "region") {
+                        // Obsidian Meridian — richer, deeper palette
                         switch (type) {
-                            case "plains":   fillStyle = "#9cd37b"; break;
-                            case "forest":   fillStyle = "#1b4e33"; break;
-                            case "mountain": fillStyle = "#788896"; break;
-                            case "desert":   fillStyle = "#ebd07d"; break;
-                            case "swamp":    fillStyle = "#2e3b2b"; break;
-                            case "ocean":    fillStyle = "#2060b0"; break;
-                            case "hills":    fillStyle = "#b0cf5a"; break;
-                            case "snow":     fillStyle = "#cfe8f7"; break;
-                            case "jungle":   fillStyle = "#0f3d1a"; break;
-                            case "coast":    fillStyle = "#d4a44c"; break;
-                            case "volcanic": fillStyle = "#3d1010"; break;
-                            case "tundra":   fillStyle = "#8796a0"; break;
-                            case "river":    fillStyle = "#3172c8"; break;
-                            default: fillStyle = "#9cd37b"; break;
+                            case "plains":   fillStyle = terrainPatterns["plains"]   || "#5a9444"; break;
+                            case "forest":   fillStyle = terrainPatterns["forest"]   || "#164530"; break;
+                            case "mountain": fillStyle = terrainPatterns["mountain"] || "#52667a"; break;
+                            case "desert":   fillStyle = terrainPatterns["desert"]   || "#c8a040"; break;
+                            case "swamp":    fillStyle = terrainPatterns["swamp"]    || "#243822"; break;
+                            case "ocean":    fillStyle = terrainPatterns["ocean"]    || "#1a4e9b"; break;
+                            case "hills":    fillStyle = terrainPatterns["hills"]    || "#699b3c"; break;
+                            case "snow":     fillStyle = terrainPatterns["snow"]     || "#b6d4eb"; break;
+                            case "jungle":   fillStyle = terrainPatterns["jungle"]   || "#0c3018"; break;
+                            case "coast":    fillStyle = terrainPatterns["coast"]    || "#b88830"; break;
+                            case "volcanic": fillStyle = terrainPatterns["volcanic"] || "#420e0a"; break;
+                            case "tundra":   fillStyle = terrainPatterns["tundra"]   || "#6a7e88"; break;
+                            case "river":    fillStyle = terrainPatterns["river"]    || "#2258a8"; break;
+                            default: fillStyle = terrainPatterns["plains"] || "#5a9444"; break;
                         }
                     } else {
                         switch (type) {
-                            case "stone": fillStyle = "#363943"; break;
-                            case "wood": fillStyle = "#6d3e1d"; break;
-                            case "grass": fillStyle = "#24502f"; break;
-                            case "water": fillStyle = "#152e70"; break;
-                            case "lava": fillStyle = "#9c1a08"; break;
-                            case "abyss": fillStyle = "#07080b"; break;
-                            default: fillStyle = "#363943"; break;
+                            case "stone": fillStyle = terrainPatterns["stone"] || "#363943"; break;
+                            case "wood": fillStyle = terrainPatterns["wood"] || "#6d3e1d"; break;
+                            case "grass": fillStyle = terrainPatterns["grass"] || "#24502f"; break;
+                            case "water": fillStyle = terrainPatterns["water"] || "#152e70"; break;
+                            case "lava": fillStyle = terrainPatterns["lava"] || "#9c1a08"; break;
+                            case "abyss": fillStyle = terrainPatterns["abyss"] || "#07080b"; break;
+                            default: fillStyle = terrainPatterns["stone"] || "#363943"; break;
                         }
                     }
 
@@ -1860,7 +1870,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     switch (type) {
                         case "stone":
-                            targetCtx.fillStyle = "#363943";
+                            targetCtx.fillStyle = terrainPatterns["stone"] || "#363943";
                             targetCtx.fillRect(x, y, size, size);
                             targetCtx.strokeStyle = "#2b2e36";
                             targetCtx.lineWidth = 1;
@@ -1873,7 +1883,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             break;
 
                         case "wood":
-                            targetCtx.fillStyle = "#6d3e1d";
+                            targetCtx.fillStyle = terrainPatterns["wood"] || "#6d3e1d";
                             targetCtx.fillRect(x, y, size, size);
                             targetCtx.strokeStyle = "#4d2912";
                             targetCtx.lineWidth = 1.5;
@@ -1890,7 +1900,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             break;
 
                         case "grass":
-                            targetCtx.fillStyle = "#24502f";
+                            targetCtx.fillStyle = terrainPatterns["grass"] || "#24502f";
                             targetCtx.fillRect(x, y, size, size);
                             targetCtx.strokeStyle = "#1b3c23";
                             targetCtx.lineWidth = 1;
@@ -1905,7 +1915,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             break;
 
                         case "water":
-                            targetCtx.fillStyle = "#152e70";
+                            targetCtx.fillStyle = terrainPatterns["water"] || "#152e70";
                             targetCtx.fillRect(x, y, size, size);
 
                             targetCtx.strokeStyle = "#2144a0";
@@ -1922,7 +1932,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             break;
 
                         case "lava":
-                            targetCtx.fillStyle = "#9c1a08";
+                            targetCtx.fillStyle = terrainPatterns["lava"] || "#9c1a08";
                             targetCtx.fillRect(x, y, size, size);
 
                             targetCtx.strokeStyle = "#e04e0b";
@@ -1939,7 +1949,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             break;
 
                         case "abyss":
-                            targetCtx.fillStyle = "#07080b";
+                            targetCtx.fillStyle = terrainPatterns["abyss"] || "#07080b";
                             targetCtx.fillRect(x, y, size, size);
                             break;
                     }
@@ -2146,19 +2156,45 @@ document.addEventListener("DOMContentLoaded", () => {
                 targetCtx.restore();
             }
 
-            // 2. Draw custom token name
+            // 2. Draw custom token name — pill label (Obsidian Meridian style)
             if (s.name) {
                 targetCtx.save();
                 targetCtx.font = "bold 11px Outfit, Arial, sans-serif";
                 targetCtx.textAlign = "center";
-                targetCtx.textBaseline = "bottom";
+                targetCtx.textBaseline = "middle";
 
-                targetCtx.strokeStyle = "#000000";
-                targetCtx.lineWidth = 3;
-                targetCtx.strokeText(s.name, canvasX, canvasY - tokenRadius - 6);
+                const labelText = s.name;
+                const textWidth = targetCtx.measureText(labelText).width;
+                const padX = 7, padY = 4;
+                const lw = textWidth + padX * 2;
+                const lh = 16;
+                const lx = canvasX - lw / 2;
+                const ly = canvasY - tokenRadius - lh - 8;
 
-                targetCtx.fillStyle = "#ffffff";
-                targetCtx.fillText(s.name, canvasX, canvasY - tokenRadius - 6);
+                // Dark pill background
+                targetCtx.fillStyle = "rgba(10, 12, 20, 0.88)";
+                const r = lh / 2;
+                targetCtx.beginPath();
+                targetCtx.moveTo(lx + r, ly);
+                targetCtx.lineTo(lx + lw - r, ly);
+                targetCtx.arcTo(lx + lw, ly, lx + lw, ly + lh, r);
+                targetCtx.lineTo(lx + lw, ly + lh - r);
+                targetCtx.arcTo(lx + lw, ly + lh, lx + lw - r, ly + lh, r);
+                targetCtx.lineTo(lx + r, ly + lh);
+                targetCtx.arcTo(lx, ly + lh, lx, ly + lh - r, r);
+                targetCtx.lineTo(lx, ly + r);
+                targetCtx.arcTo(lx, ly, lx + r, ly, r);
+                targetCtx.closePath();
+                targetCtx.fill();
+
+                // Gold border
+                targetCtx.strokeStyle = "rgba(216, 184, 74, 0.55)";
+                targetCtx.lineWidth = 0.8;
+                targetCtx.stroke();
+
+                // White text
+                targetCtx.fillStyle = "#eef2f7";
+                targetCtx.fillText(labelText, canvasX, ly + lh / 2);
                 targetCtx.restore();
             }
 
@@ -3820,7 +3856,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mapModeSelect.value = "combat"; chkShowGrid.checked = true;
         state.fog = Array(cols * rows).fill(true);
         state.walls = []; state.stamps = [];
-        state.bgImage = ""; state.showBg = false;
+        state.bgImage = ""; state.bgCustomAssetId = null; state.showBg = false;
         state.terrain = Array(cols * rows).fill(null).map(() => ({ type: "abyss", variation: 0 }));
 
         const idx = (c, r) => r * cols + c;
@@ -4007,7 +4043,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mapModeSelect.value = "combat"; chkShowGrid.checked = true;
         state.fog = Array(cols * rows).fill(true);
         state.walls = []; state.stamps = [];
-        state.bgImage = ""; state.showBg = false;
+        state.bgImage = ""; state.bgCustomAssetId = null; state.showBg = false;
 
         // Step 1: Random seed
         let grid = Array(cols * rows).fill(false);
@@ -4206,6 +4242,7 @@ document.addEventListener("DOMContentLoaded", () => {
         mapModeSelect.value = "combat";
         chkShowGrid.checked = true;
         state.bgImage = "";
+        state.bgCustomAssetId = null;
         state.showBg = false;
         state.travelScaleValue = 5;
         state.travelScaleUnit = "millas";
@@ -4295,6 +4332,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (tmpl.bgImage) {
             state.bgImage = tmpl.bgImage;
+            state.bgCustomAssetId = null;
             state.showBg = true;
             state.bgScale = tmpl.bgScale !== undefined ? tmpl.bgScale : 1.0;
             state.bgX = tmpl.bgX !== undefined ? tmpl.bgX : 0;
@@ -4324,6 +4362,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } else {
             state.bgImage = "";
+            state.bgCustomAssetId = null;
             state.showBg = false;
             if (chkShowBg) chkShowBg.checked = false;
         }
@@ -4921,6 +4960,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 fog: state.fog,
                 initiative: state.initiative,
                 bgImage: state.bgImage,
+                bgCustomAssetId: state.bgCustomAssetId,
                 bgScale: state.bgScale,
                 bgX: state.bgX,
                 bgY: state.bgY,
@@ -5008,6 +5048,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     const reader = new FileReader();
                     reader.onload = (event) => {
                         state.bgImage = event.target.result;
+                        state.bgCustomAssetId = null;
                         state.showBg = true;
                         if (chkShowBg) chkShowBg.checked = true;
                         if (bgTemplateSelect) bgTemplateSelect.value = "";
@@ -5025,6 +5066,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const template = bgTemplates[val];
                 if (template) {
                     state.bgImage = template.src;
+                    state.bgCustomAssetId = null;
                     state.bgScale = template.scale;
                     state.bgX = template.x;
                     state.bgY = template.y;
@@ -5045,6 +5087,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (opacityVal) opacityVal.textContent = `${Math.round(state.bgOpacity * 100)}%`;
                 } else {
                     state.bgImage = "";
+                    state.bgCustomAssetId = null;
                 }
                 saveHistory();
                 draw();
@@ -6141,6 +6184,83 @@ document.addEventListener("DOMContentLoaded", () => {
     let db = null;
     const customImageUrls = new Map(); // assetId -> Blob URL
     let selectedCustomPackId = null;
+    let customAssetFilter = {
+        category: "all",
+        search: ""
+    };
+
+    const customAssetCategories = {
+        background: { label: "Fondo", size: 3.0, layer: "background" },
+        floor: { label: "Piso", size: 1.0, layer: "floors" },
+        wall: { label: "Muro", size: 1.0, layer: "walls" },
+        structure: { label: "Estruct.", size: 2.4, layer: "structures" },
+        object: { label: "Objeto", size: 1.0, layer: "props" },
+        nature: { label: "Natur.", size: 1.5, layer: "props" },
+        overlay: { label: "Overlay", size: 2.2, layer: "overlays" },
+        token: { label: "Token", size: 1.0, layer: "tokens" },
+        symbol: { label: "Simbolo", size: 1.0, layer: "symbols" },
+        uncategorized: { label: "Otro", size: 1.0, layer: "props" }
+    };
+
+    function normalizeAssetText(value) {
+        return String(value || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function inferCustomAssetCategory(relativePath) {
+        const text = normalizeAssetText(relativePath).replace(/\\/g, "/");
+        const has = (...terms) => terms.some(term => text.includes(term));
+
+        if (has("battlemap", "background", "backgrounds", "map base", "map-base", "maps/", "battlemaps", "frame ")) {
+            return "background";
+        }
+        if (has("overlay", "overlays", "shadow", "shadows", "light", "lights", "smoke", "fog", "blood", "weather", "grid")) {
+            return "overlay";
+        }
+        if (has("token", "tokens", "creature", "creatures", "monster", "monsters", "humanoid", "humanoids", "hero", "heroes", "npc", "skeleton")) {
+            return "token";
+        }
+        if (has("wall", "walls", "fence", "fences", "door", "doors", "window", "windows", "gate", "gates", "rim", "rims")) {
+            return "wall";
+        }
+        if (has("floor", "floors", "tile", "tiles", "tileset", "ground", "terrain", "road", "path", "water", "lava", "stone ", "stone-", "stone_")) {
+            return "floor";
+        }
+        if (has("structure", "structures", "building", "buildings", "house", "houses", "roof", "roofs", "bridge", "bridges", "stair", "stairs", "crypt", "sewer", "sewers")) {
+            return "structure";
+        }
+        if (has("plant", "plants", "tree", "trees", "nature", "forest", "rock", "rocks", "bush", "bushes", "grass")) {
+            return "nature";
+        }
+        if (has("object", "objects", "prop", "props", "barrel", "barrels", "crate", "crates", "treasure", "table", "tables", "chair", "chairs", "campfire", "campfires", "bone", "bones", "chain", "chains", "library", "lab", "machinery")) {
+            return "object";
+        }
+        if (has("symbol", "symbols", "icon", "icons", "marker", "markers")) {
+            return "symbol";
+        }
+
+        return "uncategorized";
+    }
+
+    function getCustomAssetSubcategory(relativePath) {
+        const parts = String(relativePath || "").replace(/\\/g, "/").split("/").filter(Boolean);
+        if (parts.length <= 1) return "";
+        return parts[parts.length - 2];
+    }
+
+    function buildCustomAssetTags(relativePath, category) {
+        const clean = normalizeAssetText(relativePath)
+            .replace(/\.[a-z0-9]+$/i, "")
+            .replace(/[_-]+/g, " ");
+        const folderTags = clean.split(/[\/\s]+/).filter(Boolean);
+        return Array.from(new Set([category, ...folderTags])).slice(0, 18);
+    }
+
+    function getCustomAssetPlacement(asset) {
+        return customAssetCategories[asset.category || "uncategorized"] || customAssetCategories.uncategorized;
+    }
 
     function openDatabase() {
         return new Promise((resolve, reject) => {
@@ -6260,6 +6380,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    async function restoreCustomBackground() {
+        if (!state.bgCustomAssetId) return;
+        if (!db) await openDatabase();
+        try {
+            const asset = await getAssetById(state.bgCustomAssetId);
+            if (asset) {
+                state.bgImage = getCustomAssetUrl(asset);
+                state.showBg = true;
+            } else {
+                console.warn("Background asset not found in IndexedDB:", state.bgCustomAssetId);
+            }
+        } catch (e) {
+            console.error("Error restoring custom background:", e);
+        }
+    }
+
     async function renderCustomPacksList() {
         const packsList = document.getElementById("customPacksList");
         if (!packsList) return;
@@ -6362,6 +6498,179 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    async function renderCustomStampsGrid(packId) {
+        const grid = document.getElementById("customStampsGrid");
+        const controls = document.getElementById("assetLibraryControls");
+        const summary = document.getElementById("customAssetSummary");
+        if (!grid) return;
+        grid.innerHTML = "";
+
+        const assets = await getAssetsByPack(packId);
+        if (assets.length === 0) {
+            if (controls) controls.style.display = "none";
+            grid.innerHTML = `<p style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 12px; grid-column: span 3;">Este pack no tiene imagenes validas.</p>`;
+            return;
+        }
+
+        if (controls) controls.style.display = "block";
+
+        const enrichedAssets = assets.map(asset => {
+            const inferredCategory = inferCustomAssetCategory(asset.path || asset.name);
+            return {
+                ...asset,
+                category: asset.category || inferredCategory,
+                subcategory: asset.subcategory || getCustomAssetSubcategory(asset.path || asset.name),
+                tags: asset.tags || buildCustomAssetTags(asset.path || asset.name, inferredCategory)
+            };
+        });
+
+        const search = normalizeAssetText(customAssetFilter.search);
+        const filteredAssets = enrichedAssets.filter(asset => {
+            const categoryMatch = customAssetFilter.category === "all" || asset.category === customAssetFilter.category;
+            const haystack = normalizeAssetText([
+                asset.name,
+                asset.path,
+                asset.subcategory,
+                asset.category,
+                ...(asset.tags || [])
+            ].join(" "));
+            const searchMatch = !search || haystack.includes(search);
+            return categoryMatch && searchMatch;
+        });
+
+        const counts = enrichedAssets.reduce((acc, asset) => {
+            acc[asset.category] = (acc[asset.category] || 0) + 1;
+            return acc;
+        }, {});
+
+        if (summary) {
+            const categoryLabel = customAssetFilter.category === "all"
+                ? "todas las categorias"
+                : (customAssetCategories[customAssetFilter.category]?.label || customAssetFilter.category);
+            const topCounts = Object.entries(counts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 4)
+                .map(([cat, count]) => `${customAssetCategories[cat]?.label || cat}: ${count}`)
+                .join(" · ");
+            summary.textContent = `${filteredAssets.length}/${enrichedAssets.length} assets en ${categoryLabel}${topCounts ? ` · ${topCounts}` : ""}`;
+        }
+
+        if (filteredAssets.length === 0) {
+            grid.innerHTML = `<p style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 12px; grid-column: span 3;">No hay assets que coincidan con el filtro.</p>`;
+            return;
+        }
+
+        filteredAssets.forEach(asset => {
+            const url = getCustomAssetUrl(asset);
+            const placement = getCustomAssetPlacement(asset);
+            const cleanName = asset.name.replace(/\.[^/.]+$/, "");
+
+            const item = document.createElement("div");
+            item.className = `stamp-item custom-asset-card category-${asset.category}`;
+            item.dataset.image = url;
+            item.dataset.name = cleanName;
+            item.title = `${cleanName}${asset.path ? `\n${asset.path}` : ""}`;
+
+            const img = document.createElement("img");
+            img.src = url;
+            img.alt = item.dataset.name;
+            item.appendChild(img);
+
+            const badge = document.createElement("span");
+            badge.className = "asset-category-badge";
+            badge.textContent = placement.label;
+            item.appendChild(badge);
+
+            const label = document.createElement("small");
+            label.textContent = item.dataset.name.substring(0, 16);
+            item.appendChild(label);
+
+            if (asset.subcategory) {
+                const folder = document.createElement("span");
+                folder.className = "asset-subfolder";
+                folder.textContent = asset.subcategory.substring(0, 18);
+                item.appendChild(folder);
+            }
+
+            const actions = document.createElement("div");
+            actions.className = "asset-card-actions";
+            const bgBtn = document.createElement("button");
+            bgBtn.type = "button";
+            bgBtn.textContent = "Fondo";
+            bgBtn.title = "Usar como mapa base HD";
+            bgBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                setCustomAssetAsBackground(asset, url);
+            });
+            actions.appendChild(bgBtn);
+            item.appendChild(actions);
+
+            item.addEventListener("click", () => {
+                document.querySelectorAll(".stamp-item").forEach(i => i.classList.remove("active"));
+                item.classList.add("active");
+
+                activeStamp = "";
+                activeStampImage = url;
+                activeCustomAssetId = asset.id;
+                activeStampName = item.dataset.name;
+                activeStampDescription = `${placement.label} HD importado${asset.path ? ` desde ${asset.path}` : ""}`;
+                if (stampSizeInput) {
+                    stampSizeInput.value = String(Math.min(3, Math.max(0.5, placement.size)));
+                    stampSizeVal.textContent = `${parseFloat(stampSizeInput.value).toFixed(1)}x`;
+                }
+                selectedStampId = null;
+                updateStampControlUI();
+                draw();
+            });
+
+            grid.appendChild(item);
+        });
+    }
+
+    function setCustomAssetAsBackground(asset, url) {
+        const bgOpacity = document.getElementById("bgOpacity");
+        const bgScale = document.getElementById("bgScale");
+        const bgX = document.getElementById("bgX");
+        const bgY = document.getElementById("bgY");
+        const chkShowBg = document.getElementById("chkShowBg");
+        const bgTemplateSelect = document.getElementById("bgTemplateSelect");
+
+        state.bgImage = url;
+        state.bgCustomAssetId = asset.id;
+        state.showBg = true;
+        state.bgOpacity = 1.0;
+        state.bgScale = 1.0;
+        state.bgX = 0;
+        state.bgY = 0;
+
+        if (chkShowBg) chkShowBg.checked = true;
+        if (bgTemplateSelect) bgTemplateSelect.value = "";
+        if (bgOpacity) {
+            bgOpacity.value = state.bgOpacity;
+            const valEl = document.getElementById("bgOpacityVal");
+            if (valEl) valEl.textContent = "100%";
+        }
+        if (bgScale) {
+            bgScale.value = state.bgScale;
+            const valEl = document.getElementById("bgScaleVal");
+            if (valEl) valEl.textContent = "1.0x";
+        }
+        if (bgX) {
+            bgX.value = state.bgX;
+            const valEl = document.getElementById("bgXVal");
+            if (valEl) valEl.textContent = "0px";
+        }
+        if (bgY) {
+            bgY.value = state.bgY;
+            const valEl = document.getElementById("bgYVal");
+            if (valEl) valEl.textContent = "0px";
+        }
+
+        cachedBgSrc = "";
+        saveHistory();
+        draw();
+    }
+
     async function processZipFile(file) {
         if (!file) return;
 
@@ -6383,24 +6692,46 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Save pack metadata
-            await savePack({ id: packId, name: packName, date: Date.now() });
-
             // Save each asset
             let importedCount = 0;
+            const categoryCounts = {};
             for (const fileInfo of imageFiles) {
                 const blob = await fileInfo.async("blob");
                 const fileName = fileInfo.name.split("/").pop();
+                const relativePath = fileInfo.name.replace(/\\/g, "/");
+                const category = inferCustomAssetCategory(relativePath);
+                const placement = getCustomAssetPlacement({ category });
+                const subcategory = getCustomAssetSubcategory(relativePath);
+                const tags = buildCustomAssetTags(relativePath, category);
                 const assetId = `asset_${packId}_${importedCount}_${Math.random().toString(36).substr(2, 5)}`;
 
                 await saveAsset({
                     id: assetId,
                     packId: packId,
                     name: fileName,
+                    path: relativePath,
+                    category,
+                    subcategory,
+                    tags,
+                    defaultScale: placement.size,
+                    defaultLayer: placement.layer,
+                    licenseStatus: "local-private",
                     blob: blob
                 });
+                categoryCounts[category] = (categoryCounts[category] || 0) + 1;
                 importedCount++;
             }
+
+            // Save pack metadata after assets are classified.
+            await savePack({
+                id: packId,
+                name: packName,
+                date: Date.now(),
+                assetCount: importedCount,
+                categoryCounts,
+                source: "local-zip",
+                licenseStatus: "local-private"
+            });
 
             alert(`¡Pack "${packName}" importado con éxito! Se cargaron ${importedCount} assets.`);
             selectedCustomPackId = packId;
@@ -6695,6 +7026,228 @@ document.addEventListener("DOMContentLoaded", () => {
                 customAudioFilesInput.value = "";
             });
         }
+    }
+
+    // --- PROCEDURAL HD TEXTURE GENERATOR ---
+    function initProceduralTextures() {
+        const createTilePattern = (width, height, renderFn) => {
+            const tempCanvas = document.createElement("canvas");
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext("2d");
+            renderFn(tempCtx, width, height);
+            return ctx.createPattern(tempCanvas, "repeat");
+        };
+
+        // 1. HD GRASS TEXTURE
+        terrainPatterns["grass"] = createTilePattern(128, 128, (tempCtx, w, h) => {
+            tempCtx.fillStyle = "#1b4d22";
+            tempCtx.fillRect(0, 0, w, h);
+            
+            // Texture noise
+            for (let i = 0; i < 600; i++) {
+                const x = Math.random() * w;
+                const y = Math.random() * h;
+                const alpha = Math.random() * 0.15;
+                tempCtx.fillStyle = `rgba(30, 80, 40, ${alpha})`;
+                tempCtx.fillRect(x, y, 1.5, 1.5);
+            }
+            
+            // Random dark/light green grass blades
+            for (let i = 0; i < 60; i++) {
+                const x = Math.random() * w;
+                const y = Math.random() * h;
+                const size = 4 + Math.random() * 6;
+                tempCtx.strokeStyle = "rgba(45, 105, 55, 0.35)";
+                tempCtx.lineWidth = 1;
+                tempCtx.beginPath();
+                tempCtx.moveTo(x, y);
+                tempCtx.quadraticCurveTo(x + 2, y - size / 2, x + 3, y - size);
+                tempCtx.stroke();
+            }
+        });
+
+        // 2. HD STONE TEXTURE (Ancient Cobblestone Blocks)
+        terrainPatterns["stone"] = createTilePattern(128, 128, (tempCtx, w, h) => {
+            tempCtx.fillStyle = "#373a42";
+            tempCtx.fillRect(0, 0, w, h);
+            
+            tempCtx.strokeStyle = "#1a1b1f";
+            tempCtx.lineWidth = 2.5;
+            
+            const rowHeight = 32;
+            for (let y = 0; y <= h; y += rowHeight) {
+                tempCtx.beginPath();
+                tempCtx.moveTo(0, y);
+                tempCtx.lineTo(w, y);
+                tempCtx.stroke();
+                
+                const offset = (y / rowHeight) % 2 === 0 ? 0 : 32;
+                for (let x = offset; x <= w + 32; x += 64) {
+                    tempCtx.beginPath();
+                    tempCtx.moveTo(x, y);
+                    tempCtx.lineTo(x, y + rowHeight);
+                    tempCtx.stroke();
+                }
+            }
+            
+            // 3D Bevel Highlights and Shadows
+            tempCtx.lineWidth = 1;
+            for (let y = 0; y < h; y += rowHeight) {
+                const offset = (y / rowHeight) % 2 === 0 ? 0 : 32;
+                for (let x = offset - 64; x < w; x += 64) {
+                    // Highlight lines (top and left of each block)
+                    tempCtx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+                    tempCtx.beginPath();
+                    tempCtx.moveTo(x + 2, y + rowHeight - 2);
+                    tempCtx.lineTo(x + 2, y + 2);
+                    tempCtx.lineTo(x + 64 - 2, y + 2);
+                    tempCtx.stroke();
+                    
+                    // Shadow lines (bottom and right of each block)
+                    tempCtx.strokeStyle = "rgba(0, 0, 0, 0.22)";
+                    tempCtx.beginPath();
+                    tempCtx.moveTo(x + 2, y + rowHeight - 2);
+                    tempCtx.lineTo(x + 64 - 2, y + rowHeight - 2);
+                    tempCtx.lineTo(x + 64 - 2, y + 2);
+                    tempCtx.stroke();
+                }
+            }
+        });
+
+        // 3. HD WOOD PLANK TEXTURE
+        terrainPatterns["wood"] = createTilePattern(128, 128, (tempCtx, w, h) => {
+            tempCtx.fillStyle = "#6e4020";
+            tempCtx.fillRect(0, 0, w, h);
+            
+            const plankWidth = 32;
+            tempCtx.strokeStyle = "#381f0e";
+            tempCtx.lineWidth = 2.5;
+            for (let x = 0; x <= w; x += plankWidth) {
+                tempCtx.beginPath();
+                tempCtx.moveTo(x, 0);
+                tempCtx.lineTo(x, h);
+                tempCtx.stroke();
+                
+                const offset = (x / plankWidth) % 2 === 0 ? 0 : 48;
+                for (let y = offset; y <= h + 48; y += 96) {
+                    tempCtx.beginPath();
+                    tempCtx.moveTo(x, y);
+                    tempCtx.lineTo(x + plankWidth, y);
+                    tempCtx.stroke();
+                }
+            }
+            
+            // Wood Grain patterns
+            tempCtx.strokeStyle = "rgba(48, 24, 8, 0.25)";
+            tempCtx.lineWidth = 1;
+            for (let x = 0; x < w; x += plankWidth) {
+                for (let j = 0; j < 3; j++) {
+                    const gx = x + 4 + Math.random() * (plankWidth - 8);
+                    tempCtx.beginPath();
+                    tempCtx.moveTo(gx, 0);
+                    tempCtx.bezierCurveTo(gx + 3, h / 3, gx - 3, 2 * h / 3, gx, h);
+                    tempCtx.stroke();
+                }
+                
+                // Small nails at joints
+                tempCtx.fillStyle = "rgba(0, 0, 0, 0.45)";
+                const offset = (x / plankWidth) % 2 === 0 ? 0 : 48;
+                for (let y = offset; y <= h + 48; y += 96) {
+                    if (y >= 0 && y < h) {
+                        tempCtx.beginPath();
+                        tempCtx.arc(x + 4, y - 4, 1.5, 0, Math.PI * 2);
+                        tempCtx.arc(x + plankWidth - 4, y - 4, 1.5, 0, Math.PI * 2);
+                        tempCtx.arc(x + 4, y + 4, 1.5, 0, Math.PI * 2);
+                        tempCtx.arc(x + plankWidth - 4, y + 4, 1.5, 0, Math.PI * 2);
+                        tempCtx.fill();
+                    }
+                }
+            }
+        });
+
+        // 4. HD WATER TEXTURE
+        terrainPatterns["water"] = createTilePattern(128, 128, (tempCtx, w, h) => {
+            tempCtx.fillStyle = "#152e70";
+            tempCtx.fillRect(0, 0, w, h);
+            
+            tempCtx.strokeStyle = "rgba(43, 90, 161, 0.3)";
+            tempCtx.lineWidth = 2;
+            for (let y = 16; y < h + 32; y += 32) {
+                for (let x = -32; x < w + 32; x += 64) {
+                    tempCtx.beginPath();
+                    tempCtx.moveTo(x, y);
+                    tempCtx.quadraticCurveTo(x + 16, y - 8, x + 32, y);
+                    tempCtx.quadraticCurveTo(x + 48, y + 8, x + 64, y);
+                    tempCtx.stroke();
+                }
+            }
+        });
+
+        // 5. HD LAVA TEXTURE
+        terrainPatterns["lava"] = createTilePattern(128, 128, (tempCtx, w, h) => {
+            tempCtx.fillStyle = "#1e0403";
+            tempCtx.fillRect(0, 0, w, h);
+            
+            // Lava veins
+            for (let i = 0; i < 10; i++) {
+                const x1 = Math.random() * w;
+                const y1 = Math.random() * h;
+                const x2 = Math.random() * w;
+                const y2 = Math.random() * h;
+                
+                tempCtx.strokeStyle = "#9c1a08";
+                tempCtx.lineWidth = 3.5;
+                tempCtx.beginPath();
+                tempCtx.moveTo(x1, y1);
+                tempCtx.bezierCurveTo(w/2, h/2, x2, y2, x2, y2);
+                tempCtx.stroke();
+                
+                // Hot core lines (yellow/orange)
+                tempCtx.strokeStyle = "#facc15";
+                tempCtx.lineWidth = 1.2;
+                tempCtx.beginPath();
+                tempCtx.moveTo(x1, y1);
+                tempCtx.bezierCurveTo(w/2, h/2, x2, y2, x2, y2);
+                tempCtx.stroke();
+            }
+        });
+
+        // 6. HD SAND TEXTURE (Desert Dunes)
+        terrainPatterns["desert"] = createTilePattern(128, 128, (tempCtx, w, h) => {
+            tempCtx.fillStyle = "#cfab4e";
+            tempCtx.fillRect(0, 0, w, h);
+            
+            tempCtx.strokeStyle = "#a18032";
+            tempCtx.lineWidth = 2;
+            for (let y = 20; y < h + 40; y += 40) {
+                tempCtx.beginPath();
+                tempCtx.moveTo(0, y);
+                tempCtx.bezierCurveTo(w/4, y - 10, 3*w/4, y + 10, w, y);
+                tempCtx.stroke();
+            }
+        });
+
+        // Map region biomes to patterns
+        terrainPatterns["plains"] = terrainPatterns["grass"];
+        terrainPatterns["forest"] = createTilePattern(128, 128, (tempCtx, w, h) => {
+            tempCtx.fillStyle = "#123016";
+            tempCtx.fillRect(0, 0, w, h);
+            tempCtx.fillStyle = "#0c200f";
+            for(let i=0; i<30; i++) {
+                tempCtx.beginPath();
+                tempCtx.arc(Math.random()*w, Math.random()*h, 4+Math.random()*3, 0, Math.PI*2);
+                tempCtx.fill();
+            }
+        });
+        terrainPatterns["mountain"] = createTilePattern(128, 128, (tempCtx, w, h) => {
+            tempCtx.fillStyle = "#4a5360";
+            tempCtx.fillRect(0, 0, w, h);
+        });
+        terrainPatterns["abyss"] = createTilePattern(128, 128, (tempCtx, w, h) => {
+            tempCtx.fillStyle = "#09090b";
+            tempCtx.fillRect(0, 0, w, h);
+        });
     }
 
     // --- BOOTSTRAP ---
