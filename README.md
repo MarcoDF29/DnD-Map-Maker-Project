@@ -1,6 +1,6 @@
 # DnD Map Maker Project
 
-MapForge is a local browser-based D&D map maker and lightweight VTT playground for building scenes, placing tokens, testing fog of war, rolling dice, and experimenting with open-source fantasy assets.
+MapForge is a local browser-based D&D map maker first, with lightweight VTT experiments around tokens, fog of war, dice, and GM/player views. The main goal is to help a GM build good-looking maps from HD backgrounds, modular tiles, props, overlays, and local asset packs.
 
 This is a personal/local project for tabletop sessions with friends. Treat the current version as an active prototype.
 
@@ -24,6 +24,7 @@ Any static server works. The app is vanilla HTML/CSS/JS, so there is no npm inst
 
 - Square, hex, and region map modes.
 - Built-in templates for dungeons, forests, caves, taverns, ruins, and regional exploration.
+- Local HD ready-to-play templates for selected downloaded frames when `local-assets/` is present.
 - Terrain painting, walls, fog of war, ruler, stamps, tokens, and initiative tracker.
 - Animated dice roller with an on-map roll overlay.
 - GM/player view toggle.
@@ -33,6 +34,7 @@ Any static server works. The app is vanilla HTML/CSS/JS, so there is no npm inst
 - DawnLike sprite picker with 1300+ pixel-art sprites.
 - Game-icons, RPG Awesome, Azgaar heraldic symbols, map icons, and local battlemaps.
 - Experimental HD asset pack import from `.zip` files using browser IndexedDB.
+- Local/private asset workflow for large packs and downloaded battlemaps that should not be committed to git.
 - Experimental VTT-oriented export/import work.
 
 ## Suggested Test Flow
@@ -75,5 +77,6 @@ See [THIRD_PARTY_ATTRIBUTIONS.md](THIRD_PARTY_ATTRIBUTIONS.md) for current notes
 ## Research And Roadmap
 
 - [research-mapforge-opportunities.md](research-mapforge-opportunities.md): open-source/VTT research notes.
+- [MAP_MAKER_STRATEGY.md](MAP_MAKER_STRATEGY.md): product direction for Santi's map-maker-first workflow.
 - [ROADMAP.md](ROADMAP.md): practical next steps.
 - [open-source-integration.md](open-source-integration.md): earlier source review notes.

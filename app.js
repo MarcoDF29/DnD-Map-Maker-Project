@@ -626,6 +626,78 @@ document.addEventListener("DOMContentLoaded", () => {
                 {id: "c7", emoji: "🍄", x: 18.5, y: 10.5, size: 0.8, rotation: 0, isToken: false, isHero: false, visionRadius: 0},
                 {id: "c8", emoji: "🪙", x: 12.5, y: 3.5, size: 1.3, rotation: 0, isToken: false, isHero: false, visionRadius: 0}
             ]
+        },
+        "local-summer-town-hd": {
+            cols: 30,
+            rows: 40,
+            bgImage: "local-assets/dnd-assets-main/Frame 262.jpg",
+            bgScale: 1.16,
+            bgX: 40,
+            bgY: 0,
+            bgOpacity: 1.0,
+            mode: "combat",
+            walls: [
+                // Castle main wall (left side)
+                {x1: 3, y1: 0, x2: 3, y2: 40, width: 8, color: "#1c1c1f"},
+                // Castle Towers
+                {x1: 3, y1: 17, x2: 4.5, y2: 17, width: 6, color: "#1c1c1f"},
+                {x1: 3, y1: 22, x2: 4.5, y2: 22, width: 6, color: "#1c1c1f"},
+                // Top Center House
+                {x1: 15, y1: 3, x2: 20, y2: 3, width: 6, color: "#1c1c1f"},
+                {x1: 20, y1: 3, x2: 20, y2: 8, width: 6, color: "#1c1c1f"},
+                {x1: 20, y1: 8, x2: 15, y2: 8, width: 6, color: "#1c1c1f"},
+                {x1: 15, y1: 8, x2: 15, y2: 3, width: 6, color: "#1c1c1f"},
+                // Bottom Center Stables
+                {x1: 11, y1: 28, x2: 21, y2: 28, width: 6, color: "#1c1c1f"},
+                {x1: 21, y1: 28, x2: 21, y2: 36, width: 6, color: "#1c1c1f"},
+                {x1: 21, y1: 36, x2: 11, y2: 36, width: 6, color: "#1c1c1f"},
+                {x1: 11, y1: 36, x2: 11, y2: 28, width: 6, color: "#1c1c1f"}
+            ],
+            stamps: [
+                {id: "st-h1", emoji: "🛡️", x: 12.5, y: 18.5, size: 1.0, rotation: 0, isToken: true, isHero: true, visionRadius: 5, name: "Guerrero", hpCurrent: 28, hpMax: 28, conditions: []},
+                {id: "st-h2", emoji: "🧙", x: 14.5, y: 18.5, size: 1.0, rotation: 0, isToken: true, isHero: true, visionRadius: 6, name: "Mago", hpCurrent: 20, hpMax: 20, conditions: []}
+            ]
+        },
+        "local-icy-cavern-hd": {
+            cols: 30,
+            rows: 40,
+            bgImage: "local-assets/dnd-assets-main/Frame 242.jpg",
+            bgScale: 0.75,
+            bgX: 0,
+            bgY: 0,
+            bgOpacity: 1.0,
+            mode: "combat",
+            walls: [
+                // Top Ice Cave borders
+                {x1: 5, y1: 5, x2: 12, y2: 8, width: 8, color: "#1c1c1f"},
+                {x1: 18, y1: 8, x2: 25, y2: 5, width: 8, color: "#1c1c1f"},
+                // Bottom Ice Cave borders
+                {x1: 4, y1: 35, x2: 12, y2: 32, width: 8, color: "#1c1c1f"},
+                {x1: 18, y1: 32, x2: 26, y2: 35, width: 8, color: "#1c1c1f"}
+            ],
+            stamps: [
+                {id: "ic-h1", emoji: "🛡️", x: 14.5, y: 35.5, size: 1.0, rotation: 0, isToken: true, isHero: true, visionRadius: 5, name: "Héroe", hpCurrent: 30, hpMax: 30, conditions: []},
+                {id: "ic-b1", emoji: "🐉", x: 14.5, y: 12.5, size: 2.2, rotation: 0, isToken: true, isHero: false, visionRadius: 0, name: "Dragón de Escarcha", hpCurrent: 140, hpMax: 140, conditions: []}
+            ]
+        },
+        "local-lake-village-hd": {
+            cols: 30,
+            rows: 40,
+            bgImage: "local-assets/dnd-assets-main/Frame 243.jpg",
+            bgScale: 0.71,
+            bgX: 45,
+            bgY: 0,
+            bgOpacity: 1.0,
+            mode: "combat",
+            walls: [
+                // Platforms and docks boundary walls
+                {x1: 8, y1: 12, x2: 22, y2: 12, width: 6, color: "#1c1c1f"},
+                {x1: 8, y1: 28, x2: 22, y2: 28, width: 6, color: "#1c1c1f"}
+            ],
+            stamps: [
+                {id: "lv-h1", emoji: "🏹", x: 12.5, y: 22.5, size: 1.0, rotation: 0, isToken: true, isHero: true, visionRadius: 5, name: "Arquero", hpCurrent: 22, hpMax: 22, conditions: []},
+                {id: "lv-h2", emoji: "✝️", x: 14.5, y: 22.5, size: 1.0, rotation: 0, isToken: true, isHero: true, visionRadius: 5, name: "Clérigo", hpCurrent: 25, hpMax: 25, conditions: []}
+            ]
         }
     };
 
@@ -4199,14 +4271,62 @@ document.addEventListener("DOMContentLoaded", () => {
         gridColsInput.value = tmpl.cols;
         gridRowsInput.value = tmpl.rows;
 
-        state.terrain = decodeTerrain(tmpl.terrainStr, tmpl.cols, tmpl.rows, tmpl.terrainMap).map(cell => {
-            return { type: cell, variation: Math.floor(Math.random() * 3) };
-        });
-        state.walls = JSON.parse(JSON.stringify(tmpl.walls));
-        state.stamps = JSON.parse(JSON.stringify(tmpl.stamps));
+        if (tmpl.terrainStr) {
+            state.terrain = decodeTerrain(tmpl.terrainStr, tmpl.cols, tmpl.rows, tmpl.terrainMap).map(cell => {
+                return { type: cell, variation: Math.floor(Math.random() * 3) };
+            });
+        } else {
+            const defaultType = name.includes("cavern") ? "stone" : "grass";
+            state.terrain = Array(tmpl.cols * tmpl.rows).fill(null).map(() => ({ type: defaultType, variation: 0 }));
+        }
+
+        state.walls = JSON.parse(JSON.stringify(tmpl.walls || []));
+        state.stamps = JSON.parse(JSON.stringify(tmpl.stamps || []));
 
         // Initialize Fog of War
         state.fog = Array(tmpl.cols * tmpl.rows).fill(false);
+
+        // Handle Background Image if provided in template
+        const chkShowBg = document.getElementById("chkShowBg");
+        const bgOpacity = document.getElementById("bgOpacity");
+        const bgScale = document.getElementById("bgScale");
+        const bgX = document.getElementById("bgX");
+        const bgY = document.getElementById("bgY");
+
+        if (tmpl.bgImage) {
+            state.bgImage = tmpl.bgImage;
+            state.showBg = true;
+            state.bgScale = tmpl.bgScale !== undefined ? tmpl.bgScale : 1.0;
+            state.bgX = tmpl.bgX !== undefined ? tmpl.bgX : 0;
+            state.bgY = tmpl.bgY !== undefined ? tmpl.bgY : 0;
+            state.bgOpacity = tmpl.bgOpacity !== undefined ? tmpl.bgOpacity : 0.8;
+
+            if (chkShowBg) chkShowBg.checked = true;
+            if (bgOpacity) {
+                bgOpacity.value = state.bgOpacity;
+                const valEl = document.getElementById("bgOpacityVal");
+                if (valEl) valEl.textContent = `${Math.round(state.bgOpacity * 100)}%`;
+            }
+            if (bgScale) {
+                bgScale.value = state.bgScale;
+                const valEl = document.getElementById("bgScaleVal");
+                if (valEl) valEl.textContent = `${state.bgScale.toFixed(2)}x`;
+            }
+            if (bgX) {
+                bgX.value = state.bgX;
+                const valEl = document.getElementById("bgXVal");
+                if (valEl) valEl.textContent = `${state.bgX}px`;
+            }
+            if (bgY) {
+                bgY.value = state.bgY;
+                const valEl = document.getElementById("bgYVal");
+                if (valEl) valEl.textContent = `${state.bgY}px`;
+            }
+        } else {
+            state.bgImage = "";
+            state.showBg = false;
+            if (chkShowBg) chkShowBg.checked = false;
+        }
 
         // Set map mode defaults
         if (tmpl.mode === "region") {
@@ -4218,8 +4338,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             mapModeSelect.value = "combat";
             chkShowGrid.checked = true;
-            // For combat dungeons, cover everything in fog to test dynamic visibility!
-            if (name === "dungeon" || name === "ruins" || name === "cave") {
+            if (name === "dungeon" || name === "ruins" || name === "cave" || name.includes("cavern")) {
                 state.fog.fill(true);
             }
         }

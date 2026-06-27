@@ -101,3 +101,10 @@ These assets need final source/license verification before public or commercial 
   - `local-assets/`
 
 This folder is intentionally ignored by git. It may contain downloaded zips or reference material without clear redistribution rights.
+
+Known local/private sources discussed during development:
+
+- Downloaded HD frames in the user's Downloads/local-assets folders.
+- Google Drive private pack folder containing `Mapping-Pack`, `Token_Bundle_01`, `Token_Bundle_02`, `Token`, and `Tokens`.
+
+These sources are useful for private playtesting and local asset import, but they should not be committed or redistributed from this repository until each pack has a clear license and attribution trail.

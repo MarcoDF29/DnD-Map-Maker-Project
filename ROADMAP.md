@@ -1,6 +1,6 @@
 # MapForge Roadmap
 
-This roadmap is meant to guide the next rounds with Santi/GM feedback. It favors small, testable improvements over big rewrites.
+This roadmap is meant to guide the next rounds with Santi/GM feedback. It favors MapForge as a map maker first: high-quality backgrounds, local asset packs, tile/wall tools, layers, and exports. Play/VTT features stay useful, but they should not crowd out map creation.
 
 ## Phase 0 - Stabilize The Prototype
 
@@ -10,44 +10,49 @@ This roadmap is meant to guide the next rounds with Santi/GM feedback. It favors
 - Decide whether the project remains private-only or will target public redistribution.
 - Keep `local-assets/` out of git unless each asset has a clear license.
 
-## Phase 1 - GM Usability
+## Phase 1 - Map Maker Foundation
 
-- Reorganize tools into clearer groups: Build, Play, Assets, Export.
-- Replace remaining emoji UI icons with a consistent icon set.
-- Improve the object picker with search, filters, favorites, and recent assets.
-- Add better empty states and small hints for core workflows.
-- Add a "GM test session" checklist directly in the UI or docs.
+- Treat HD frames/battlemaps as first-class background assets.
+- Add background transform controls: move, scale, rotate, lock, reset.
+- Add grid alignment controls: cell size, offset X/Y, opacity, color, square/hex.
+- Reorganize tools into clearer groups: Build, Assets, Layers, Play, Export.
+- Keep the AI/compendium panel useful but secondary to map creation.
 
-## Phase 2 - Map Editing Power
+## Phase 2 - Asset Library And Packs
 
-- Move stamp definitions from hardcoded HTML into structured data.
-- Add proper layers: background, terrain, walls, objects, tokens, fog, notes.
-- Add object locking, z-order controls, and multi-select.
+- Harden ZIP asset import and add pack metadata.
+- Preserve folder hierarchy from imported packs.
+- Add categories: backgrounds, floors, walls, structures, interior, objects, nature, overlays, tokens, symbols.
+- Add search, filters, favorites, and recent assets.
+- Add pack export/import for private local bundles without committing assets to git.
+
+## Phase 3 - Map Editing Power
+
+- Add proper layers: background, floors, walls, props, overlays, tokens, fog, notes.
+- Add a tile brush for floors and terrain.
+- Add a wall brush for straight walls and modular wall pieces.
+- Add object locking, z-order controls, duplicate, and multi-select.
 - Add doors/windows as wall subtypes.
-- Improve grid snapping and free placement controls.
+- Improve grid snapping, half-step snapping, and free placement controls.
 
-## Phase 3 - Play Mode
+## Phase 4 - Export Quality And Interoperability
+
+- Export high-resolution PNG/WebP with and without grid.
+- Export a player-safe version without GM notes/fog internals.
+- Export a `.mapforge.zip` containing JSON plus used local assets.
+- Improve JSON schema/versioning.
+- Investigate Universal VTT-like data: image, walls, doors, lights, notes.
+- Investigate Foundry/Owlbear/Roll20-friendly exports.
+
+## Phase 5 - Play Mode And Generators
 
 - Better player view export/share.
 - Line-of-sight improvements.
 - Token vision presets.
 - Initiative tracker tied more directly to tokens.
-- Conditions, HP markers, and turn highlighting on map.
-
-## Phase 4 - Assets And Generators
-
-- Harden ZIP asset import and add pack metadata.
-- Add asset tags and search across DawnLike, map icons, symbols, HD packs.
-- Add procedural dungeon presets: cave, crypt, fortress, sewer, temple.
-- Add procedural region presets: coast, mountains, desert, swamp, trade route.
+- Procedural dungeon presets: cave, crypt, fortress, sewer, temple.
+- Procedural region presets: coast, mountains, desert, swamp, trade route.
 - Evaluate whether `rot.js`, `visibility-polygon-js`, or Konva should become deeper dependencies.
-
-## Phase 5 - Interoperability
-
-- Improve JSON schema/versioning.
-- Export/import Universal VTT-like data: image, walls, doors, lights, notes.
-- Investigate Foundry/Owlbear/Roll20-friendly exports.
-- Add a migration path when old saved JSON files change shape.
 
 ## Design Direction
 
@@ -64,4 +69,5 @@ Target feel: modern arcane cartographer workbench.
 - Should this remain purely static HTML/CSS/JS, or eventually move to Vite/React/Svelte?
 - Should imported HD assets stay only in IndexedDB, or can packs be exported/imported as project files?
 - Which VTT export target matters most: Foundry, Owlbear, Roll20, or generic UVTT?
-- What does Santi actually need at the table first: faster map creation, better play mode, or better asset management?
+- Should private Drive/local asset packs be documented as source folders, import recipes, or `.mapforge.zip` bundles?
+- Which map creation workflow matters most to Santi first: HD frame alignment, modular dungeon tiles, or prop decoration?
