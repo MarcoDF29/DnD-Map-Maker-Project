@@ -2694,6 +2694,130 @@ body {
     overflow-y: auto;
 }
 
+.asset-library-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 12px;
+}
+
+.asset-library-controls input[type="search"] {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 11px;
+    padding: 7px 9px;
+    outline: none;
+}
+
+.asset-library-controls input[type="search"]:focus {
+    border-color: rgba(212, 175, 55, 0.55);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.08);
+}
+
+.asset-category-filters {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.asset-category-filters button {
+    flex: 0 0 auto;
+    border: 1px solid rgba(212, 175, 55, 0.18);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-family: var(--font-ui);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.asset-category-filters button.active,
+.asset-category-filters button:hover {
+    background: rgba(212, 175, 55, 0.16);
+    color: #facc15;
+    border-color: rgba(212, 175, 55, 0.45);
+}
+
+.asset-library-summary {
+    color: var(--text-muted);
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+#customStampsGrid .custom-asset-card {
+    position: relative;
+    min-height: 116px;
+    padding-bottom: 28px;
+}
+
+#customStampsGrid .custom-asset-card img {
+    max-height: 50px;
+    object-fit: contain;
+}
+
+.asset-category-badge {
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    max-width: calc(100% - 10px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-radius: 999px;
+    background: rgba(9, 12, 18, 0.82);
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    color: #facc15;
+    font-size: 8px;
+    font-weight: 800;
+    line-height: 1;
+    padding: 3px 5px;
+    pointer-events: none;
+}
+
+.asset-subfolder {
+    display: block;
+    width: 100%;
+    color: var(--text-muted);
+    font-size: 8px;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+
+.asset-card-actions {
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    display: flex;
+    justify-content: center;
+}
+
+.asset-card-actions button {
+    width: 100%;
+    border: 1px solid rgba(212, 175, 55, 0.22);
+    background: rgba(212, 175, 55, 0.1);
+    color: #facc15;
+    border-radius: 5px;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 4px 5px;
+    cursor: pointer;
+}
+
+.asset-card-actions button:hover {
+    background: rgba(212, 175, 55, 0.2);
+}
+
 /* =====================================================
    MODERN UI REDESIGN 2026
    Mesa de Cartógrafo Arcana Moderna

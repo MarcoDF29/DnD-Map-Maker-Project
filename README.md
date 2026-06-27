@@ -34,6 +34,8 @@ Any static server works. The app is vanilla HTML/CSS/JS, so there is no npm inst
 - DawnLike sprite picker with 1300+ pixel-art sprites.
 - Game-icons, RPG Awesome, Azgaar heraldic symbols, map icons, and local battlemaps.
 - Experimental HD asset pack import from `.zip` files using browser IndexedDB.
+- Imported HD packs are auto-categorized by folder/name into backgrounds, floors, walls, structures, objects, nature, overlays, and tokens.
+- Background assets from imported packs can be used as editable map bases.
 - Local/private asset workflow for large packs and downloaded battlemaps that should not be committed to git.
 - Experimental VTT-oriented export/import work.
 
@@ -44,11 +46,13 @@ Any static server works. The app is vanilla HTML/CSS/JS, so there is no npm inst
 3. Paint terrain and draw walls.
 4. Open `Objetos` and try the `DL` DawnLike tab.
 5. Place tokens, HD stamps, map icons, and symbols.
-6. Move, rotate, duplicate, and delete stamps.
-7. Try fog of war and GM/player view.
-8. Roll dice and confirm the on-map animation.
-9. Save JSON, reload it, and export PNG.
-10. Try the local library save/load flow.
+6. Import a private HD ZIP pack and try the category filters/search.
+7. Use a background asset as the map base, then place props/tokens over it.
+8. Move, rotate, duplicate, and delete stamps.
+9. Try fog of war and GM/player view.
+10. Roll dice and confirm the on-map animation.
+11. Save JSON, reload it, and export PNG.
+12. Try the local library save/load flow.
 
 Use [FEEDBACK_CHECKLIST.md](FEEDBACK_CHECKLIST.md) for a structured review.
 

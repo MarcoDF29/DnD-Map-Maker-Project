@@ -6414,7 +6414,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const nameSpan = document.createElement("span");
             nameSpan.className = "pack-name";
-            nameSpan.textContent = pack.name;
+            const categorySummary = pack.categoryCounts
+                ? Object.entries(pack.categoryCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 2)
+                    .map(([cat, count]) => `${customAssetCategories[cat]?.label || cat} ${count}`)
+                    .join(" · ")
+                : "";
+            nameSpan.textContent = pack.assetCount ? `${pack.name} (${pack.assetCount})` : pack.name;
+            nameSpan.title = categorySummary || pack.name;
             li.appendChild(nameSpan);
 
             const deleteBtn = document.createElement("button");
@@ -6451,7 +6459,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    async function renderCustomStampsGrid(packId) {
+    async function renderLegacyCustomStampsGrid(packId) {
         const grid = document.getElementById("customStampsGrid");
         if (!grid) return;
         grid.innerHTML = "";
@@ -6563,13 +6571,14 @@ document.addEventListener("DOMContentLoaded", () => {
         filteredAssets.forEach(asset => {
             const url = getCustomAssetUrl(asset);
             const placement = getCustomAssetPlacement(asset);
-            const cleanName = asset.name.replace(/\.[^/.]+$/, "");
+            const displayPath = String(asset.path || asset.name).replace(/\\/g, "/");
+            const cleanName = (displayPath.split("/").pop() || asset.name).replace(/\.[^/.]+$/, "");
 
             const item = document.createElement("div");
             item.className = `stamp-item custom-asset-card category-${asset.category}`;
             item.dataset.image = url;
             item.dataset.name = cleanName;
-            item.title = `${cleanName}${asset.path ? `\n${asset.path}` : ""}`;
+            item.title = `${cleanName}${displayPath ? `\n${displayPath}` : ""}`;
 
             const img = document.createElement("img");
             img.src = url;
@@ -6592,18 +6601,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 item.appendChild(folder);
             }
 
-            const actions = document.createElement("div");
-            actions.className = "asset-card-actions";
-            const bgBtn = document.createElement("button");
-            bgBtn.type = "button";
-            bgBtn.textContent = "Fondo";
-            bgBtn.title = "Usar como mapa base HD";
-            bgBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                setCustomAssetAsBackground(asset, url);
-            });
-            actions.appendChild(bgBtn);
-            item.appendChild(actions);
+            if (asset.category === "background") {
+                const actions = document.createElement("div");
+                actions.className = "asset-card-actions";
+                const bgBtn = document.createElement("button");
+                bgBtn.type = "button";
+                bgBtn.textContent = "Usar fondo";
+                bgBtn.title = "Usar como mapa base HD";
+                bgBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    setCustomAssetAsBackground(asset, url);
+                });
+                actions.appendChild(bgBtn);
+                item.appendChild(actions);
+            }
 
             item.addEventListener("click", () => {
                 document.querySelectorAll(".stamp-item").forEach(i => i.classList.remove("active"));
@@ -6613,7 +6624,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 activeStampImage = url;
                 activeCustomAssetId = asset.id;
                 activeStampName = item.dataset.name;
-                activeStampDescription = `${placement.label} HD importado${asset.path ? ` desde ${asset.path}` : ""}`;
+                activeStampDescription = `${placement.label} HD importado${displayPath ? ` desde ${displayPath}` : ""}`;
                 if (stampSizeInput) {
                     stampSizeInput.value = String(Math.min(3, Math.max(0.5, placement.size)));
                     stampSizeVal.textContent = `${parseFloat(stampSizeInput.value).toFixed(1)}x`;
@@ -6697,8 +6708,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const categoryCounts = {};
             for (const fileInfo of imageFiles) {
                 const blob = await fileInfo.async("blob");
-                const fileName = fileInfo.name.split("/").pop();
                 const relativePath = fileInfo.name.replace(/\\/g, "/");
+                const fileName = relativePath.split("/").pop();
                 const category = inferCustomAssetCategory(relativePath);
                 const placement = getCustomAssetPlacement({ category });
                 const subcategory = getCustomAssetSubcategory(relativePath);
@@ -6782,6 +6793,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 alert("Por favor, suelta un archivo .zip válido.");
             }
         });
+
+        const searchInput = document.getElementById("customAssetSearch");
+        if (searchInput) {
+            searchInput.addEventListener("input", (e) => {
+                customAssetFilter.search = e.target.value;
+                if (selectedCustomPackId) renderCustomStampsGrid(selectedCustomPackId);
+            });
+        }
+
+        const categoryFilters = document.getElementById("customAssetCategoryFilters");
+        if (categoryFilters) {
+            categoryFilters.addEventListener("click", (e) => {
+                const btn = e.target.closest("button[data-category]");
+                if (!btn) return;
+                customAssetFilter.category = btn.dataset.category || "all";
+                categoryFilters.querySelectorAll("button").forEach(el => el.classList.remove("active"));
+                btn.classList.add("active");
+                if (selectedCustomPackId) renderCustomStampsGrid(selectedCustomPackId);
+            });
+        }
 
         // Initial load of imported packs
         openDatabase().then(() => {

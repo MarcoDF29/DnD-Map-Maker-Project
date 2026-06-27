@@ -109,9 +109,10 @@ Cada asset deberia tener:
 
 - Mantener `local-assets/` fuera de git.
 - Documentar la carpeta Drive como fuente local/private.
-- Permitir importar ZIPs HD desde la UI.
-- Mostrar packs importados con categorias y thumbnails.
-- Agregar busqueda por nombre/carpeta.
+- Permitir importar ZIPs HD desde la UI. Hecho.
+- Mostrar packs importados con categorias y thumbnails. Hecho inicial.
+- Agregar busqueda por nombre/carpeta. Hecho inicial.
+- Permitir usar un asset de fondo importado como mapa base HD. Hecho inicial.
 
 ### P1 - Herramientas reales de mapa
 
@@ -152,7 +153,7 @@ Cada asset deberia tener:
 
 Seguir con vanilla HTML/CSS/JS por ahora, porque el prototipo ya funciona y se puede probar localmente sin build. Si las capas, drag/resize y transform empiezan a doler, evaluar Konva.js antes de migrar toda la app a React/Svelte.
 
-La proxima mejora de codigo de mayor impacto es convertir los assets importados en una biblioteca categorizada por carpetas, con busqueda y seleccion por subcarpeta. Despues, agregar `Tile Brush` para que los packs de `wall&floor complete`, `Tileset - Crypt` y `Sewers` sean realmente utiles para construir mapas.
+La mejora de codigo actual convierte los assets importados en una biblioteca categorizada por carpetas, con busqueda y seleccion por subcarpeta. La proxima mejora de mayor impacto es agregar `Tile Brush` para que los packs de `wall&floor complete`, `Tileset - Crypt` y `Sewers` sean realmente utiles para construir mapas modulares, no solo para colocar imagenes sueltas.
 
 ## Checklist para Santi
 
