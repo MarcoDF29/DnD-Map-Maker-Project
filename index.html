@@ -227,6 +227,7 @@
                         <h3>Categoría de Objetos</h3>
                         <div class="tabs">
                             <button class="tab-btn active" data-tab="tabTokens">Fichas</button>
+                            <button class="tab-btn" data-tab="tabDawnlike" title="DawnLike sprites — CC BY-SA DragonDePlatino">🎨DL</button>
                             <button class="tab-btn" data-tab="tabFurniture">Decorado</button>
                             <button class="tab-btn" data-tab="tabHazards">Objetos</button>
                             <button class="tab-btn" data-tab="tabNature">Región</button>
@@ -238,6 +239,7 @@
                         <!-- TAB CONTENT: TOKENS -->
                         <div class="tab-content active" id="tabTokens">
                             <div class="stamps-grid">
+                                <div class="stamp-item" data-image="assets/dnd_dragon_token.png" data-name="Dragón Rojo" data-description="Un temible y majestuoso dragón rojo listo para el combate." title="Dragón Rojo (Token HD)"><img src="assets/dnd_dragon_token.png" alt=""><small>Dragón R.</small></div>
                                 <div class="stamp-item" data-emoji="🧙" title="Mago / Héroe">🧙 <small>Mago</small></div>
                                 <div class="stamp-item" data-emoji="🛡️" title="Guerrero / Héroe">🛡️ <small>Guerrero</small></div>
                                 <div class="stamp-item" data-emoji="🏹" title="Arquero / Héroe">🏹 <small>Arquero</small></div>
@@ -262,6 +264,7 @@
                         <!-- TAB CONTENT: DUNGEON / FURNITURE -->
                         <div class="tab-content" id="tabFurniture">
                             <div class="stamps-grid">
+                                <div class="stamp-item" data-image="assets/dnd_treasure_chest.png" data-name="Cofre de Tesoro" data-description="Un cofre de madera reforzado con metal dorado, rebosante de oro y gemas." title="Cofre de Tesoro (HD)"><img src="assets/dnd_treasure_chest.png" alt=""><small>Cofre HD</small></div>
                                 <div class="stamp-item" data-emoji="🚪" title="Puerta cerrada">🚪 <small>P. Cerrada</small></div>
                                 <div class="stamp-item" data-emoji="🔓" title="Puerta abierta">🔓 <small>P. Abierta</small></div>
                                 <div class="stamp-item" data-emoji="📦" title="Cofre">📦 <small>Cofre</small></div>
@@ -285,6 +288,7 @@
                         <!-- TAB CONTENT: ITEMS / HAZARDS -->
                         <div class="tab-content" id="tabHazards">
                             <div class="stamps-grid">
+                                <div class="stamp-item" data-image="assets/campfire_stamp.png" data-name="Hoguera Realista" data-description="Hoguera de campamento con troncos encendidos y chispas." title="Hoguera Realista (HD)"><img src="assets/campfire_stamp.png" alt=""><small>Hoguera HD</small></div>
                                 <div class="stamp-item" data-emoji="🔥" title="Fuego / Hoguera">🔥 <small>Hoguera</small></div>
                                 <div class="stamp-item" data-emoji="🕸️" title="Telaraña obstáculo">🕸️ <small>Telaraña</small></div>
                                 <div class="stamp-item" data-emoji="☠️" title="Trampa de pinchos">☠️ <small>Peligro</small></div>
@@ -392,6 +396,43 @@
                                 <div class="stamp-item" data-image="assets/map-icons/tradeStable.png" data-name="Establo" data-description="Establo en el camino real. Cambio de monturas y descanso." title="Establo"><img src="assets/map-icons/tradeStable.png" alt=""><small>Establo</small></div>
                                 <div class="stamp-item" data-image="assets/map-icons/tradeWatchtower.png" data-name="Atalaya" data-description="Atalaya de vigilancia de la ruta comercial." title="Atalaya"><img src="assets/map-icons/tradeWatchtower.png" alt=""><small>Atalaya</small></div>
                             </div>
+                        </div>
+
+                        <!-- TAB CONTENT: DAWNLIKE SPRITE PICKER (CC BY-SA 3.0 — DragonDePlatino) -->
+                        <div class="tab-content" id="tabDawnlike">
+                            <div style="margin-bottom:8px;">
+                                <p style="font-size:10px;color:var(--text-muted);margin-bottom:6px;">DawnLike 1300+ sprites — CC BY-SA 3.0 — DragonDePlatino</p>
+                                <select id="dlSheetSelect" style="width:100%;background:rgba(0,0,0,0.35);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-family:var(--font-ui);font-size:11px;">
+                                    <option value="Characters/Humanoid0">Humanoides (216 sprites)</option>
+                                    <option value="Characters/Undead0">No-muertos (80 sprites)</option>
+                                    <option value="Characters/Demon0">Demonios (72 sprites)</option>
+                                    <option value="Characters/Elemental0">Elementales (88 sprites)</option>
+                                    <option value="Characters/Reptile0">Reptilianos (120 sprites)</option>
+                                    <option value="Characters/Slime0">Slimes (40 sprites)</option>
+                                    <option value="Characters/Player0">Jugadores (120 sprites)</option>
+                                    <option value="Characters/Misc0">Varios (64 sprites)</option>
+                                    <option value="Characters/Aquatic0">Acuáticos (48 sprites)</option>
+                                    <option value="Characters/Avian0">Avian (104 sprites)</option>
+                                    <option value="Characters/Pest0">Insectos (88 sprites)</option>
+                                    <option value="Characters/Plant0">Plantas (64 sprites)</option>
+                                    <option value="Characters/Dog0">Cánidos (56 sprites)</option>
+                                    <option value="Characters/Cat0">Félidos (40 sprites)</option>
+                                    <option value="Characters/Quadraped0">Cuadrúpedos (96 sprites)</option>
+                                    <option value="Characters/Rodent0">Roedores (32 sprites)</option>
+                                    <option value="Items/Scroll">Pergaminos</option>
+                                    <option value="Items/Potion">Pociones</option>
+                                    <option value="Items/MedWep">Armas medianas</option>
+                                    <option value="Items/LongWep">Armas largas</option>
+                                    <option value="Items/Shield">Escudos</option>
+                                    <option value="Items/Armor">Armaduras</option>
+                                    <option value="Items/Chest0">Cofres</option>
+                                    <option value="Items/Key">Llaves</option>
+                                </select>
+                            </div>
+                            <div id="dlSpriteGrid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;max-height:280px;overflow-y:auto;background:rgba(0,0,0,0.2);border-radius:4px;padding:4px;">
+                                <div style="grid-column:1/-1;color:var(--text-muted);font-size:11px;text-align:center;padding:20px 0;">Selecciona una categoría para cargar los sprites.</div>
+                            </div>
+                            <p style="font-size:9px;color:var(--text-muted);margin-top:6px;">Clic en un sprite → se activa como stamp. Doble clic → coloca en el mapa.</p>
                         </div>
 
                         <!-- TAB CONTENT: GAME-ICONS.NET SVGs (CC BY 3.0) -->

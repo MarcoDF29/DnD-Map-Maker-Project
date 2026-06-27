@@ -2697,6 +2697,104 @@ document.addEventListener("DOMContentLoaded", () => {
         btnExportPng.addEventListener("click", exportMapPng);
         document.getElementById("btnExportVtt")?.addEventListener("click", exportUniversalVTT);
 
+        // --- DAWNLIKE SPRITE PICKER ---
+        (function setupDawnlikePicker() {
+            const sheetSelect = document.getElementById("dlSheetSelect");
+            const grid = document.getElementById("dlSpriteGrid");
+            if (!sheetSelect || !grid) return;
+
+            // Cache for loaded sheet images
+            const sheetCache = {};
+
+            // Sheet dimensions (pre-computed from PNG inspection)
+            const SHEET_COLS = 8; // all dawnlike sheets are 128px wide = 8 sprites
+            const SPRITE_SIZE = 16;
+            const DISPLAY_SIZE = 36; // show at 36x36 (2.25x scale)
+
+            function loadSheet(sheetPath) {
+                return new Promise((resolve) => {
+                    if (sheetCache[sheetPath]) { resolve(sheetCache[sheetPath]); return; }
+                    const img = new Image();
+                    img.onload = () => { sheetCache[sheetPath] = img; resolve(img); };
+                    img.onerror = () => resolve(null);
+                    img.src = `assets/dawnlike/${sheetPath}.png`;
+                });
+            }
+
+            async function renderSheet(sheetPath) {
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--text-muted);font-size:11px;">Cargando sprites...</div>';
+
+                const img = await loadSheet(sheetPath);
+                if (!img) {
+                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:10px;color:var(--accent-red);">Error al cargar sprites.</div>';
+                    return;
+                }
+
+                const totalRows = Math.floor(img.height / SPRITE_SIZE);
+                const totalSprites = SHEET_COLS * totalRows;
+                grid.innerHTML = "";
+
+                for (let r = 0; r < totalRows; r++) {
+                    for (let c = 0; c < SHEET_COLS; c++) {
+                        // Check if sprite is non-empty (not fully transparent)
+                        const offCtx = document.createElement("canvas");
+                        offCtx.width = SPRITE_SIZE; offCtx.height = SPRITE_SIZE;
+                        const oc = offCtx.getContext("2d");
+                        oc.drawImage(img, c * SPRITE_SIZE, r * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, 0, 0, SPRITE_SIZE, SPRITE_SIZE);
+                        const pxData = oc.getImageData(0, 0, SPRITE_SIZE, SPRITE_SIZE).data;
+                        let hasContent = false;
+                        for (let i = 3; i < pxData.length; i += 4) { if (pxData[i] > 20) { hasContent = true; break; } }
+                        if (!hasContent) continue;
+
+                        // Build display canvas
+                        const disp = document.createElement("canvas");
+                        disp.width = DISPLAY_SIZE; disp.height = DISPLAY_SIZE;
+                        const dc = disp.getContext("2d");
+                        dc.imageSmoothingEnabled = false;
+                        dc.drawImage(img, c * SPRITE_SIZE, r * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, 0, 0, DISPLAY_SIZE, DISPLAY_SIZE);
+
+                        const cell = document.createElement("div");
+                        cell.style.cssText = `cursor:pointer;border:1px solid transparent;border-radius:3px;background:rgba(0,0,0,0.3);
+                            display:flex;align-items:center;justify-content:center;padding:1px;transition:border-color 0.12s;`;
+                        cell.title = `${sheetPath} [${c},${r}]`;
+                        cell.appendChild(disp);
+
+                        cell.addEventListener("click", () => {
+                            // Deselect all DL cells
+                            grid.querySelectorAll("div[data-dl]").forEach(el => el.style.borderColor = "transparent");
+                            cell.style.borderColor = "var(--primary)";
+
+                            // Create a data URL from this sprite to use as stamp image
+                            const finalCanvas = document.createElement("canvas");
+                            finalCanvas.width = 64; finalCanvas.height = 64;
+                            const fc = finalCanvas.getContext("2d");
+                            fc.imageSmoothingEnabled = false;
+                            fc.drawImage(img, c * SPRITE_SIZE, r * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, 0, 0, 64, 64);
+                            const dataUrl = finalCanvas.toDataURL("image/png");
+
+                            // Set as active stamp image
+                            activeStamp = null;
+                            activeStampImage = dataUrl;
+                            activeStampName = `${sheetPath.split("/").pop()} [${c},${r}]`;
+                            activeStampDescription = `Sprite DawnLike — ${sheetPath}`;
+                            selectedStampId = null;
+                            updateStampControlUI();
+
+                            // Deselect other stamp items
+                            document.querySelectorAll(".stamp-item").forEach(i => i.classList.remove("active"));
+                        });
+                        cell.dataset.dl = `${c},${r}`;
+                        grid.appendChild(cell);
+                    }
+                }
+                if (grid.children.length === 0) {
+                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:10px;color:var(--text-muted);">Sin sprites visibles en esta hoja.</div>';
+                }
+            }
+
+            sheetSelect.addEventListener("change", () => renderSheet(sheetSelect.value));
+        })();
+
         // Dyson Logos toggle
         const btnDyson = document.getElementById("btnDysonMode");
         if (btnDyson) {
