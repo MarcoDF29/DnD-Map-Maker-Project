@@ -1,0 +1,29 @@
+# Lista de Tareas: División de Modos, Biomas y Herramientas de Viaje
+
+- `[x]` Diseñar e integrar la división de modos en la interfaz (index.html)
+  - `[x]` Selector `#mapMode` adaptado con opción de "🌍 Sin Rejilla (Exploración)".
+  - `[x]` Crear selector alternativo para terrenos de combate clásicos (`#combatTerrains`) y biomas de exploración (`#explorationBiomes`).
+  - `[x]` Agregar campos para escala de viaje y método de viaje en la pestaña de navegación.
+  - `[x]` Agregar campos para descripción de lore y visibilidad a jugadores en el panel de objetos.
+- `[x]` Lógica de Negocio y Controladores de Modos (app.js)
+  - `[x]` Implementar `syncUIForMapMode()` para ocultar/mostrar elementos (niebla, muros, iniciativa, biomas, HP/visión/estados).
+  - `[x]` Vincular eventos en `mapModeSelect` y `viewModeSelect` para reaccionar al cambio de vista o modo de forma interactiva.
+- `[x]` Biomas Hexagonales Procedurales
+  - `[x]` Adaptar `state.terrain` para almacenar objetos `{ type, variation }` con variaciones estéticas procedimentales (0, 1, 2) dibujadas en Canvas.
+  - `[x]` Adaptar pincel (`paintTerrainAtMouse`) y relleno (`floodFillTerrain`) para asignar variaciones aleatorias.
+  - `[x]` Asegurar compatibilidad en `restoreState` traduciendo automáticamente celdas guardadas como strings a objetos.
+- `[x]` Regla de Medición y Tiempos de Viaje
+  - `[x]` Integrar variables de viaje (`travelScaleValue`, `travelScaleUnit`, `travelMethod`) al estado global e historial (save/undo/redo).
+  - `[x]` Calcular distancias y tiempos de viaje con velocidades de D&D 5e (pie, caballo, carreta, barco, vuelo) en `drawUIPreviews()`.
+  - `[x]` Formatear badge de distancia y duración en días u horas en tiempo real en el Canvas.
+- `[x]` Ficha Informativa de Landmark y Vista de Jugador
+  - `[x]` Guardar lore en el Landmark (`s.description` y `s.showDescToPlayers`).
+  - `[x]` Restringir y deshabilitar edición en la Vista de Jugador (`viewMode === "player"`), ocultando herramientas de Master.
+- `[x]` Ejecutar comprobaciones sintácticas con `node -c app.js` para asegurar código 100% libre de errores.
+- `[x]` Mejoras de Rejilla Hexagonal e Interacción
+  - `[x]` Implementar `oddrToCube` y `getHexCoordsFromCanvas` para transformaciones e inversión de coordenadas hexagonales.
+  - `[x]` Adaptar `floodFillTerrain` para usar adyacencia de 6 vecinos en modos hexagonales.
+  - `[x]` Implementar auto-acoplamiento (snapping) y cálculo de distancias cúbicas/axiales de hexágonos reales en la regla de medición (`ruler`).
+  - `[x]` Adaptar colocación y previsualización de muros (`wall`) para acoplarse magnéticamente a las esquinas y vértices de los hexágonos.
+  - `[x]` Adaptar arrastre libre (`Alt` key) de fichas/tokens en rejillas hexagonales para evitar saltos.
+  - `[x]` Corregir cálculo de distancia de visión para revelar niebla de guerra (`revealFogAroundToken`) usando distancias de hexágono real y validando intersección de muros en coordenadas reales de Canvas.

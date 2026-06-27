@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D&D MapForge — Creador de Mapas de Rol</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="assets/rpg-awesome/rpg-awesome.min.css">
+    <script src="assets/rot.min.js"></script>
+    <!-- Google Fonts: Outfit (modern UI) & Cinzel (medieval heading style) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER / TOPBAR -->
+        <header class="topbar">
+            <div class="brand">
+                <span class="shield-icon">🛡️</span>
+                <h1>D&D MapForge</h1>
+            </div>
+
+            <!-- D&D PLAY ACTIONS -->
+            <div class="vtt-actions">
+                <div class="select-wrapper">
+                    <select id="mapTemplate" title="Cargar un mapa pre-construido">
+                        <option value="" disabled selected>🗺️ Cargar Plantilla...</option>
+                        <option value="dungeon">Mazmorra de la Calavera (Combate)</option>
+                        <option value="forest">Campamento en el Bosque (Combate)</option>
+                        <option value="swamp">Pantano de la Bruja (Exploración)</option>
+                        <option value="overworld">Reino de Eldoria (Región)</option>
+                        <option value="tradeRoute">Ruta del Río Dorado (Exploración)</option>
+                        <option value="mountainPass">Paso de las Agujas (Exploración)</option>
+                        <option value="desertOasis">Oasis de la Media Luna (Exploración)</option>
+                        <option value="proceduralRegion">🌍 Generar región procedural</option>
+                        <option value="proceduralDungeon">🎲 Mazmorra aleatoria</option>
+                        <option value="proceduralDungeon:dungeon">🪨 Mazmorra de Piedra</option>
+                        <option value="proceduralDungeon:crypt">💀 Cripta de los Muertos</option>
+                        <option value="proceduralDungeon:prison">⛓️ Prisión Subterránea</option>
+                        <option value="proceduralDungeon:barracks">⚔️ Cuartel Abandonado</option>
+                        <option value="proceduralDungeon:arcane">🔮 Torre Arcana</option>
+                        <option value="cave:cave">🗻 Cueva Natural (CA)</option>
+                        <option value="cave:mine">⛏️ Mina Abandonada (CA)</option>
+                        <option value="cave:ice">🧊 Caverna Helada (CA)</option>
+                        <option value="cave:lava">🌋 Gruta Volcánica (CA)</option>
+                        <option value="ruins">Ruinas del Templo Perdido (Combate/Exploración)</option>
+                        <option value="tavern">Taberna del Dragón Verde (Combate)</option>
+                        <option value="cave">Gruta de la Lava (Combate)</option>
+                    </select>
+                </div>
+                
+                <div class="select-wrapper">
+                    <select id="mapMode" title="Cambiar modo de rejilla y escalas">
+                        <option value="combat">⚔️ Rejilla Cuadrada (Combate)</option>
+                        <option value="hex">⬡ Rejilla Hexagonal (Combate)</option>
+                        <option value="region">🌍 Sin Rejilla (Exploración)</option>
+                    </select>
+                </div>
+
+                <div class="select-wrapper">
+                    <select id="viewMode" title="Alternar Vista de Juego">
+                        <option value="gm" selected>👁️ Vista: Master (GM)</option>
+                        <option value="player">👥 Vista: Jugadores</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="quick-actions">
+                <button id="btnUndo" class="btn-icon" title="Deshacer (Ctrl+Z)" disabled>↩️</button>
+                <button id="btnRedo" class="btn-icon" title="Rehacer (Ctrl+Y)" disabled>↪️</button>
+                <span class="divider"></span>
+                <span id="zoomDisplay" class="info-badge">Zoom: 100%</span>
+                <button id="btnZoomIn" class="btn-icon" title="Acercar (Rueda arriba)">+</button>
+                <button id="btnZoomOut" class="btn-icon" title="Alejar (Rueda abajo)">-</button>
+                <button id="btnZoomReset" class="btn-text">1:1</button>
+            </div>
+
+            <div class="file-operations">
+                <label class="btn btn-secondary">
+                    📂 Cargar JSON
+                    <input type="file" id="fileInput" accept=".json" style="display: none;">
+                </label>
+                <button id="btnSaveJson" class="btn btn-secondary">💾 Guardar JSON</button>
+                <button id="btnExportPng" class="btn btn-primary">🖼️ Exportar PNG</button>
+                <button id="btnExportVtt" class="btn btn-secondary" title="Exportar Universal VTT (.dd2vtt) — compatible con Foundry VTT, Roll20 y otros">📦 Export VTT</button>
+                <button id="btnDysonMode" class="btn btn-secondary" title="Alternar Estilo Dyson Logos (B&N clásico de rol)" style="font-size:11px;">✒️ Dyson</button>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <div class="main-layout">
+            <!-- SIDEBAR -->
+            <aside class="sidebar">
+                <!-- HERRAMIENTAS SELECTION -->
+                <div class="sidebar-section">
+                    <h3>Herramientas</h3>
+                    <div class="tools-grid">
+                        <button class="tool-btn active" id="toolPan" data-tool="pan" title="Mover y zoom por el mapa">
+                            <i class="ra ra-hand"></i> Navegar
+                        </button>
+                        <button class="tool-btn" id="toolTerrain" data-tool="terrain" title="Pintar baldosas de terreno">
+                            <i class="ra ra-mountains"></i> Terreno
+                        </button>
+                        <button class="tool-btn" id="toolWall" data-tool="wall" title="Dibujar muros rectos alineados a la rejilla">
+                            <i class="ra ra-barrier"></i> Muros
+                        </button>
+                        <button class="tool-btn" id="toolStamp" data-tool="stamp" title="Colocar e interactuar con objetos y tokens">
+                            <i class="ra ra-castle-flag"></i> Objetos
+                        </button>
+                        <button class="tool-btn" id="toolFog" data-tool="fog" title="Añadir o revelar niebla de guerra">
+                            <i class="ra ra-poison-cloud"></i> Niebla
+                        </button>
+                        <button class="tool-btn" id="toolRuler" data-tool="ruler" title="Medir distancias (Regla)">
+                            <i class="ra ra-telescope"></i> Regla
+                        </button>
+                    </div>
+                </div>
+
+                <div class="divider-horizontal"></div>
+
+                <!-- DYNAMIC PANEL (Changes depending on selected tool) -->
+                <div class="panel-content" id="toolOptionsPanel">
+                    
+                    <!-- OPTIONS: TERRAIN -->
+                    <div class="options-group" id="optionsTerrain" style="display: none;">
+                        <h3>Tipo de Terreno</h3>
+                        
+                        <!-- Combat Terrain Picker -->
+                        <div class="terrain-picker" id="combatTerrains">
+                            <div class="terrain-option active" data-terrain="stone" style="--bg: #4b525d;">
+                                <span class="label">Piedra</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="wood" style="--bg: #8b5a2b;">
+                                <span class="label">Madera</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="grass" style="--bg: #3c6e47;">
+                                <span class="label">Césped</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="water" style="--bg: #2a52be;">
+                                <span class="label">Agua</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="lava" style="--bg: #cf3415;">
+                                <span class="label">Lava</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="abyss" style="--bg: #111115;">
+                                <span class="label">Abismo</span>
+                            </div>
+                        </div>
+
+                        <!-- Exploration Biomes Picker -->
+                        <div class="terrain-picker" id="explorationBiomes" style="display: none;">
+                            <div class="terrain-option" data-terrain="plains" style="--bg: #5f9e47;">
+                                <span class="label">Llanura</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="forest" style="--bg: #1e5c38;">
+                                <span class="label">Bosque</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="mountain" style="--bg: #64748b;">
+                                <span class="label">Montaña</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="desert" style="--bg: #d9a74e;">
+                                <span class="label">Desierto</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="swamp" style="--bg: #3f4e3c;">
+                                <span class="label">Pantano</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="ocean" style="--bg: #1d4ed8;">
+                                <span class="label">Océano</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="hills" style="--bg: #82b03c;">
+                                <span class="label">Colinas</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="snow" style="--bg: #b8d8f0;">
+                                <span class="label">Nieve</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="jungle" style="--bg: #14532d;">
+                                <span class="label">Jungla</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="coast" style="--bg: #c4964e;">
+                                <span class="label">Costa</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="volcanic" style="--bg: #7f1d1d;">
+                                <span class="label">Volcánico</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="tundra" style="--bg: #8796a0;">
+                                <span class="label">Tundra</span>
+                            </div>
+                            <div class="terrain-option" data-terrain="river" style="--bg: #2563eb;">
+                                <span class="label">Río</span>
+                            </div>
+                        </div>
+                        
+                        <div class="brush-settings">
+                            <h4>Modo de pintado</h4>
+                            <div class="btn-group">
+                                <button class="btn btn-small active" id="btnBrushPaint">Pincel</button>
+                                <button class="btn btn-small" id="btnBrushFill">Rellenar</button>
+                            </div>
+                            <h4 style="margin-top:10px;">Tamaño de pincel</h4>
+                            <div class="btn-group" id="brushSizeGroup">
+                                <button class="btn btn-small active" data-brush-size="0" title="1 celda">▪ Fino</button>
+                                <button class="btn btn-small" data-brush-size="1" title="radio 1 (~7 celdas)">◼ Medio</button>
+                                <button class="btn btn-small" data-brush-size="2" title="radio 2 (~19 celdas)">⬛ Grande</button>
+                                <button class="btn btn-small" data-brush-size="3" title="radio 3">⬛+ Enorme</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OPTIONS: WALLS -->
+                    <div class="options-group" id="optionsWall" style="display: none;">
+                        <h3>Grosor & Color del Muro</h3>
+                        <div class="setting-item">
+                            <label>Ancho (px):</label>
+                            <input type="range" id="wallWidth" min="4" max="16" value="8">
+                            <span id="wallWidthVal">8px</span>
+                        </div>
+                        <div class="setting-item">
+                            <label>Color:</label>
+                            <input type="color" id="wallColor" value="#1c1c1f">
+                        </div>
+                        <p class="help-text">💡 Haz clic y arrastra de un punto de la rejilla a otro para tirar un muro. Bloquea físicamente la visión dinámica de los héroes.</p>
+                    </div>
+
+                    <!-- OPTIONS: STAMPS (TOKENS Y OBJETOS) -->
+                    <div class="options-group" id="optionsStamp" style="display: none;">
+                        <h3>Categoría de Objetos</h3>
+                        <div class="tabs">
+                            <button class="tab-btn active" data-tab="tabTokens">Fichas</button>
+                            <button class="tab-btn" data-tab="tabFurniture">Decorado</button>
+                            <button class="tab-btn" data-tab="tabHazards">Objetos</button>
+                            <button class="tab-btn" data-tab="tabNature">Región</button>
+                            <button class="tab-btn" data-tab="tabMapIcons">🗺️Mapa</button>
+                            <button class="tab-btn" data-tab="tabGameIcons">⚔️Gfx</button>
+                            <button class="tab-btn" data-tab="tabSymbols">Heral.</button>
+                        </div>
+
+                        <!-- TAB CONTENT: TOKENS -->
+                        <div class="tab-content active" id="tabTokens">
+                            <div class="stamps-grid">
+                                <div class="stamp-item" data-emoji="🧙" title="Mago / Héroe">🧙 <small>Mago</small></div>
+                                <div class="stamp-item" data-emoji="🛡️" title="Guerrero / Héroe">🛡️ <small>Guerrero</small></div>
+                                <div class="stamp-item" data-emoji="🏹" title="Arquero / Héroe">🏹 <small>Arquero</small></div>
+                                <div class="stamp-item" data-emoji="🧝" title="Elfo / Druida">🧝 <small>Elfo</small></div>
+                                <div class="stamp-item" data-emoji="👤" title="Pícaro / Héroe">👤 <small>Pícaro</small></div>
+                                <div class="stamp-item" data-emoji="✝️" title="Clérigo / Héroe">✝️ <small>Clérigo</small></div>
+                                <div class="stamp-item" data-emoji="🐉" title="Dragón / Monstruo">🐉 <small>Dragón</small></div>
+                                <div class="stamp-item" data-emoji="🧟" title="Zombi">🧟 <small>Zombi</small></div>
+                                <div class="stamp-item" data-emoji="💀" title="Esqueleto">💀 <small>Esqueleto</small></div>
+                                <div class="stamp-item" data-emoji="👹" title="Orco">👹 <small>Orco</small></div>
+                                <div class="stamp-item" data-emoji="🕷️" title="Araña gigante">🕷️ <small>Araña</small></div>
+                                <div class="stamp-item" data-emoji="👻" title="Espectro / Fantasma">👻 <small>Espectro</small></div>
+                                <div class="stamp-item" data-emoji="🐺" title="Lobo">🐺 <small>Lobo</small></div>
+                                <div class="stamp-item" data-emoji="🐻" title="Oso">🐻 <small>Oso</small></div>
+                                <div class="stamp-item" data-emoji="🐀" title="Rata Gigante">🐀 <small>Rata G.</small></div>
+                                <div class="stamp-item" data-emoji="🧙‍♀️" title="Bruja">🧙‍♀️ <small>Bruja</small></div>
+                                <div class="stamp-item" data-emoji="🧑‍🍳" title="Posadero / PNJ">🧑‍🍳 <small>Posadero</small></div>
+                                <div class="stamp-item" data-emoji="🤴" title="Rey / Noble">🤴 <small>Rey</small></div>
+                            </div>
+                        </div>
+
+                        <!-- TAB CONTENT: DUNGEON / FURNITURE -->
+                        <div class="tab-content" id="tabFurniture">
+                            <div class="stamps-grid">
+                                <div class="stamp-item" data-emoji="🚪" title="Puerta cerrada">🚪 <small>P. Cerrada</small></div>
+                                <div class="stamp-item" data-emoji="🔓" title="Puerta abierta">🔓 <small>P. Abierta</small></div>
+                                <div class="stamp-item" data-emoji="📦" title="Cofre">📦 <small>Cofre</small></div>
+                                <div class="stamp-item" data-emoji="🪑" title="Silla">🪑 <small>Silla</small></div>
+                                <div class="stamp-item" data-emoji="🪵" title="Mesa de madera">🪵 <small>Mesa</small></div>
+                                <div class="stamp-item" data-emoji="🛏️" title="Cama">🛏️ <small>Cama</small></div>
+                                <div class="stamp-item" data-emoji="🧱" title="Pilar / Columna">🧱 <small>Pilar</small></div>
+                                <div class="stamp-item" data-emoji="🏺" title="Jarrón / Vasija">🏺 <small>Vasija</small></div>
+                                <div class="stamp-item" data-emoji="🕯️" title="Candelabro / Luces">🕯️ <small>Candil</small></div>
+                                <div class="stamp-item" data-emoji="🪜" title="Escalera">🪜 <small>Escalera</small></div>
+                                <div class="stamp-item" data-emoji="🕳️" title="Trampilla / Pozo">🕳️ <small>Trampilla</small></div>
+                                <div class="stamp-item" data-emoji="🔱" title="Altar sagrado">🔱 <small>Altar</small></div>
+                                <div class="stamp-item" data-emoji="🍷" title="Copa / Taberna">🍷 <small>Vino</small></div>
+                                <div class="stamp-item" data-emoji="🍺" title="Jarra de Cerveza">🍺 <small>Cerveza</small></div>
+                                <div class="stamp-item" data-emoji="📚" title="Librería / Estantería">📚 <small>Librería</small></div>
+                                <div class="stamp-item" data-emoji="🗺️" title="Mesa de Mapas">🗺️ <small>Mapa</small></div>
+                                <div class="stamp-item" data-emoji="🎯" title="Diana de tiro">🎯 <small>Diana</small></div>
+                            </div>
+                        </div>
+
+                        <!-- TAB CONTENT: ITEMS / HAZARDS -->
+                        <div class="tab-content" id="tabHazards">
+                            <div class="stamps-grid">
+                                <div class="stamp-item" data-emoji="🔥" title="Fuego / Hoguera">🔥 <small>Hoguera</small></div>
+                                <div class="stamp-item" data-emoji="🕸️" title="Telaraña obstáculo">🕸️ <small>Telaraña</small></div>
+                                <div class="stamp-item" data-emoji="☠️" title="Trampa de pinchos">☠️ <small>Peligro</small></div>
+                                <div class="stamp-item" data-emoji="🩸" title="Sangre / Combate">🩸 <small>Sangre</small></div>
+                                <div class="stamp-item" data-emoji="🧪" title="Poción / Ácido">🧪 <small>Poción</small></div>
+                                <div class="stamp-item" data-emoji="🪙" title="Monedas / Pila de Oro">🪙 <small>Tesoro</small></div>
+                                <div class="stamp-item" data-emoji="💎" title="Gemas preciosas">💎 <small>Gema</small></div>
+                                <div class="stamp-item" data-emoji="📜" title="Pergamino / Libro">📜 <small>Libro</small></div>
+                                <div class="stamp-item" data-emoji="🗝️" title="Llave tirada">🗝️ <small>Llave</small></div>
+                                <div class="stamp-item" data-emoji="🍖" title="Comida / Raciones">🍖 <small>Comida</small></div>
+                                <div class="stamp-item" data-emoji="⛓️" title="Cadenas">⛓️ <small>Cadenas</small></div>
+                                <div class="stamp-item" data-emoji="🍄" title="Hongo luminoso">🍄 <small>Hongo L.</small></div>
+                            </div>
+                        </div>
+
+                        <!-- TAB CONTENT: NATURE / REGIONAL OVERWORLD -->
+                        <div class="tab-content" id="tabNature">
+                            <div class="stamps-grid">
+                                <div class="stamp-item" data-emoji="🏰" title="Castillo / Gran Ciudad">🏰 <small>Castillo</small></div>
+                                <div class="stamp-item" data-emoji="🛖" title="Aldea / Choza">🛖 <small>Aldea</small></div>
+                                <div class="stamp-item" data-emoji="⛺" title="Campamento">⛺ <small>Campamento</small></div>
+                                <div class="stamp-item" data-emoji="🏚️" title="Ruinas antiguas">🏚️ <small>Ruinas</small></div>
+                                <div class="stamp-item" data-emoji="⛰️" title="Montañas altas">⛰️ <small>Montaña</small></div>
+                                <div class="stamp-item" data-emoji="🌳" title="Bosque frondoso">🌳 <small>Bosque</small></div>
+                                <div class="stamp-item" data-emoji="🌲" title="Bosque de pinos">🌲 <small>Pinos</small></div>
+                                <div class="stamp-item" data-emoji="🪨" title="Piedra / Roca grande">🪨 <small>Roca</small></div>
+                                <div class="stamp-item" data-emoji="🍄" title="Hongos venenosos">🍄 <small>Setas</small></div>
+                                <div class="stamp-item" data-emoji="🌊" title="Remolino / Aguas peligrosas">🌊 <small>Remolino</small></div>
+                                <div class="stamp-item" data-emoji="&#9875;" title="Puerto / Muelle">&#9875; <small>Puerto</small></div>
+                                <div class="stamp-item" data-emoji="🌵" title="Desierto / Cactus">🌵 <small>Cactus</small></div>
+                                <div class="stamp-item" data-emoji="🌾" title="Pantano / Hierba alta">🌾 <small>Junco</small></div>
+                                <div class="stamp-item" data-emoji="🥀" title="Ruinas secas">🥀 <small>Matorral</small></div>
+                                <div class="stamp-item" data-emoji="🦎" title="Monstruo de pantano">🦎 <small>Saurio</small></div>
+                                <div class="stamp-item" data-emoji="⛵" title="Barco de exploración">⛵ <small>Barco</small></div>
+                                <div class="stamp-item" data-emoji="🌉" title="Puente / Cruce de río">🌉 <small>Puente</small></div>
+                                <div class="stamp-item" data-emoji="🕌" title="Santuario / Templo menor">🕌 <small>Santuario</small></div>
+                                <div class="stamp-item" data-emoji="🛤️" title="Camino / Ruta comercial">🛤️ <small>Ruta</small></div>
+                                <div class="stamp-item" data-emoji="🕳️" title="Cueva / Entrada oculta">🕳️ <small>Cueva</small></div>
+                                <div class="stamp-item" data-emoji="🗼" title="Torre / Atalaya">🗼 <small>Torre</small></div>
+                                <div class="stamp-item" data-emoji="⛏️" title="Mina / Cantera">⛏️ <small>Mina</small></div>
+                                <div class="stamp-item" data-emoji="🗽" title="Monumento / Estatua antigua">🗽 <small>Monumento</small></div>
+                                <div class="stamp-item" data-emoji="🌋" title="Volcán / Caldera">🌋 <small>Volcán</small></div>
+                                <div class="stamp-item" data-emoji="🌌" title="Portal / Anomalía arcana">🌌 <small>Portal</small></div>
+                                <div class="stamp-item" data-emoji="💧" title="Cascada / Manantial">💧 <small>Cascada</small></div>
+                                <div class="stamp-item" data-emoji="🛒" title="Mercado / Caravana">🛒 <small>Mercado</small></div>
+                                <div class="stamp-item" data-emoji="🏴" title="Guarida / Territorio hostil">🏴 <small>Guarida</small></div>
+                                <!-- Nuevos stamps de biomas específicos -->
+                                <div class="stamp-item" data-emoji="🏔️" title="Pico nevado">🏔️ <small>Pico N.</small></div>
+                                <div class="stamp-item" data-emoji="🌴" title="Palmera / Jungla">🌴 <small>Palmera</small></div>
+                                <div class="stamp-item" data-emoji="🏝️" title="Isla / Costa">🏝️ <small>Isla</small></div>
+                                <div class="stamp-item" data-emoji="🌊" title="Ola / Costa peligrosa">🌊 <small>Ola</small></div>
+                                <div class="stamp-item" data-emoji="🧊" title="Glaciar / Iceberg">🧊 <small>Glaciar</small></div>
+                                <div class="stamp-item" data-emoji="🌿" title="Vegetación densa / Jungla">🌿 <small>Maleza</small></div>
+                                <div class="stamp-item" data-emoji="🦅" title="Mirador / Punto alto">🦅 <small>Mirador</small></div>
+                                <div class="stamp-item" data-emoji="🐊" title="Bestia de pantano / Río">🐊 <small>Bestia</small></div>
+                                <div class="stamp-item" data-emoji="⛩️" title="Templo antiguo / Ruina sagrada">⛩️ <small>Templo</small></div>
+                                <div class="stamp-item" data-emoji="🗺️" title="Punto de referencia / Menhir">🗺️ <small>Menhir</small></div>
+                                <div class="stamp-item" data-emoji="🌁" title="Niebla / Zona misteriosa">🌁 <small>Niebla</small></div>
+                                <div class="stamp-item" data-emoji="🏜️" title="Desierto / Eriazo">🏜️ <small>Eriazo</small></div>
+                                <div class="stamp-item" data-emoji="🌾" title="Campos / Zona agrícola">🌾 <small>Campos</small></div>
+                                <div class="stamp-item" data-emoji="⚗️" title="Laboratorio arcano / Ruina de mago">⚗️ <small>Lab. Arc.</small></div>
+                            </div>
+                        </div>
+
+                        <!-- TAB CONTENT: MAP ICONS FROM LEAFLETJS-DND-MAP (MIT) -->
+                        <div class="tab-content" id="tabMapIcons">
+                            <p style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">Iconos de mapa de campaña — ciudades, asentamientos, lugares de interés.</p>
+                            <div class="stamps-grid symbols-grid">
+                                <div class="stamp-item" data-image="assets/map-icons/cityCapital.png" data-name="Capital" data-description="Ciudad capital del reino. Centro de poder político." title="Capital"><img src="assets/map-icons/cityCapital.png" alt=""><small>Capital</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/city.png" data-name="Ciudad" data-description="Gran ciudad amurallada con mercado y guarnición." title="Ciudad"><img src="assets/map-icons/city.png" alt=""><small>Ciudad</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/cityPort.png" data-name="Puerto" data-description="Ciudad portuaria con astillero y ruta marítima." title="Puerto"><img src="assets/map-icons/cityPort.png" alt=""><small>Ciudad P.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/cityElves.png" data-name="Ciudad Élfica" data-description="Asentamiento élfico en los bosques eternos." title="Ciudad Élfica"><img src="assets/map-icons/cityElves.png" alt=""><small>Ciudad Elf.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/cityDwarves.png" data-name="Ciudad Enana" data-description="Fortaleza enana excavada en la montaña." title="Ciudad Enana"><img src="assets/map-icons/cityDwarves.png" alt=""><small>Ciudad Enana</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/cityBarbarian.png" data-name="Ciudad Bárbara" data-description="Asentamiento tribal de las tierras salvajes." title="Ciudad Bárbara"><img src="assets/map-icons/cityBarbarian.png" alt=""><small>Ciudad Bár.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/cityDruid.png" data-name="Círculo Druídico" data-description="Enclave sagrado druídico en armonía con la naturaleza." title="Ciudad Druida"><img src="assets/map-icons/cityDruid.png" alt=""><small>Círculo D.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/cityHalflings.png" data-name="Comarca" data-description="Apacible comarca de medianos con campos y colinas." title="Comarca Halfling"><img src="assets/map-icons/cityHalflings.png" alt=""><small>Comarca</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/cityLizard.png" data-name="Ciudad Lizard" data-description="Asentamiento de razas reptilianas en las marismas." title="Ciudad Lizardfolk"><img src="assets/map-icons/cityLizard.png" alt=""><small>Ciudad Liz.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/town.png" data-name="Villa" data-description="Villa comercial de tamaño mediano." title="Villa"><img src="assets/map-icons/town.png" alt=""><small>Villa</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/townDock.png" data-name="Puerto Menor" data-description="Pueblo pesquero con muelle y almacenes." title="Puerto Menor"><img src="assets/map-icons/townDock.png" alt=""><small>Puerto M.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/townMill.png" data-name="Molino" data-description="Villa con molino, granero y campos de cultivo." title="Molino"><img src="assets/map-icons/townMill.png" alt=""><small>Molino</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/townElves.png" data-name="Aldea Élfica" data-description="Pequeña comunidad élfica entre los árboles." title="Aldea Élfica"><img src="assets/map-icons/townElves.png" alt=""><small>Aldea Elf.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/townDwarves.png" data-name="Aldea Enana" data-description="Puesto avanzado enano con herrería y mina." title="Aldea Enana"><img src="assets/map-icons/townDwarves.png" alt=""><small>Aldea Enana</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/townBarbarian.png" data-name="Aldea Bárbara" data-description="Campamento permanente de tribus nómadas." title="Aldea Bárbara"><img src="assets/map-icons/townBarbarian.png" alt=""><small>Aldea Bár.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/townDruid.png" data-name="Aldea Druídica" data-description="Pequeño refugio druídico junto a un manantial sagrado." title="Aldea Druida"><img src="assets/map-icons/townDruid.png" alt=""><small>Aldea D.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/townHalflings.png" data-name="Aldea Halfling" data-description="Tranquila aldea de medianos con posada y huertos." title="Aldea Halfling"><img src="assets/map-icons/townHalflings.png" alt=""><small>Aldea Half.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/townLizard.png" data-name="Aldea Lizard" data-description="Pequeño asentamiento de lizardfolk en las ciénagas." title="Aldea Lizardfolk"><img src="assets/map-icons/townLizard.png" alt=""><small>Aldea Liz.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/fort.png" data-name="Fuerte" data-description="Fuerte militar con guarnición permanente." title="Fuerte"><img src="assets/map-icons/fort.png" alt=""><small>Fuerte</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/fortTower.png" data-name="Torre Vigía" data-description="Torre de vigilancia en la frontera del reino." title="Torre Vigía"><img src="assets/map-icons/fortTower.png" alt=""><small>Torre V.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/mageTower.png" data-name="Torre de Mago" data-description="Torre aislada de un mago poderoso. Peligrosa para los curiosos." title="Torre de Mago"><img src="assets/map-icons/mageTower.png" alt=""><small>Torre Mag.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/poiCave.png" data-name="Cueva" data-description="Entrada a una caverna con posible mazmorra o tesoro." title="Cueva"><img src="assets/map-icons/poiCave.png" alt=""><small>Cueva</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/poiMine.png" data-name="Mina" data-description="Mina activa o abandonada. Puede contener riquezas o peligros." title="Mina"><img src="assets/map-icons/poiMine.png" alt=""><small>Mina</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/poiRuin.png" data-name="Ruinas" data-description="Ruinas de una civilización antigua. Ideal para exploración." title="Ruinas"><img src="assets/map-icons/poiRuin.png" alt=""><small>Ruinas</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/poiWaterfall.png" data-name="Cascada" data-description="Cascada natural. Puede esconder una entrada secreta." title="Cascada"><img src="assets/map-icons/poiWaterfall.png" alt=""><small>Cascada</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/poiBramble.png" data-name="Matorral" data-description="Zona de vegetación densa y espinosa. Difícil de atravesar." title="Matorral"><img src="assets/map-icons/poiBramble.png" alt=""><small>Matorral</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/templeCathedral.png" data-name="Catedral" data-description="Gran catedral sagrada. Centro de poder religioso." title="Catedral"><img src="assets/map-icons/templeCathedral.png" alt=""><small>Catedral</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/templeShrine.png" data-name="Santuario" data-description="Pequeño santuario en el camino. Lugar de descanso y oración." title="Santuario"><img src="assets/map-icons/templeShrine.png" alt=""><small>Santuario</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/templeMonolith.png" data-name="Monolito" data-description="Monolito antiguo de origen desconocido. Irradia magia arcana." title="Monolito"><img src="assets/map-icons/templeMonolith.png" alt=""><small>Monolito</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/templePyramid.png" data-name="Pirámide" data-description="Pirámide de una civilización extinta. Llena de trampas y secretos." title="Pirámide"><img src="assets/map-icons/templePyramid.png" alt=""><small>Pirámide</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/templeZiggurat.png" data-name="Zigurat" data-description="Zigurat ritual de cultistas o divinidades oscuras." title="Zigurat"><img src="assets/map-icons/templeZiggurat.png" alt=""><small>Zigurat</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/templeEldath.png" data-name="Templo Eldath" data-description="Templo pacifista junto a un estanque sagrado." title="Templo Eldath"><img src="assets/map-icons/templeEldath.png" alt=""><small>Templo E.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/tradeCamp.png" data-name="Campamento" data-description="Campamento de caravana o viajeros." title="Campamento"><img src="assets/map-icons/tradeCamp.png" alt=""><small>Camp.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/tradeCampLarge.png" data-name="Camp. Grande" data-description="Gran campamento o bazar itinerante." title="Campamento Grande"><img src="assets/map-icons/tradeCampLarge.png" alt=""><small>Camp. G.</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/tradeForge.png" data-name="Forja" data-description="Forja aislada de un herrero o artesano enano." title="Forja"><img src="assets/map-icons/tradeForge.png" alt=""><small>Forja</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/tradeHunter.png" data-name="Puesto Cazador" data-description="Puesto de caza y trampas en los límites del bosque." title="Puesto de Cazador"><img src="assets/map-icons/tradeHunter.png" alt=""><small>Cazador</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/tradeStable.png" data-name="Establo" data-description="Establo en el camino real. Cambio de monturas y descanso." title="Establo"><img src="assets/map-icons/tradeStable.png" alt=""><small>Establo</small></div>
+                                <div class="stamp-item" data-image="assets/map-icons/tradeWatchtower.png" data-name="Atalaya" data-description="Atalaya de vigilancia de la ruta comercial." title="Atalaya"><img src="assets/map-icons/tradeWatchtower.png" alt=""><small>Atalaya</small></div>
+                            </div>
+                        </div>
+
+                        <!-- TAB CONTENT: GAME-ICONS.NET SVGs (CC BY 3.0) -->
+                        <!-- Attribution: game-icons.net — Delapouite, Lorc and contributors, CC BY 3.0 -->
+                        <div class="tab-content" id="tabGameIcons">
+                            <p style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">Iconos vectoriales — game-icons.net (CC BY 3.0, Delapouite/Lorc)</p>
+                            <div class="stamps-grid symbols-grid">
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/castle.svg" data-name="Castillo" data-description="Gran castillo amurallado." title="Castle — game-icons.net CC BY"><img src="assets/game-icons/castle.svg" alt=""><small>Castillo</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/village.svg" data-name="Villa" data-description="Villa pequeña con casas y comercios." title="Village — game-icons.net CC BY"><img src="assets/game-icons/village.svg" alt=""><small>Villa</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/dungeon-gate.svg" data-name="Entrada Mazmorra" data-description="Puerta de mazmorra sellada." title="Dungeon Gate — game-icons.net CC BY"><img src="assets/game-icons/dungeon-gate.svg" alt=""><small>Mazmorra</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/cave.svg" data-name="Cueva" data-description="Entrada a una caverna natural." title="Cave — game-icons.net CC BY"><img src="assets/game-icons/cave.svg" alt=""><small>Cueva</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/mine.svg" data-name="Mina" data-description="Mina con vagoneta de minerales." title="Mine — game-icons.net CC BY"><img src="assets/game-icons/mine.svg" alt=""><small>Mina</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/lighthouse.svg" data-name="Faro" data-description="Faro costero activo o abandonado." title="Lighthouse — game-icons.net CC BY"><img src="assets/game-icons/lighthouse.svg" alt=""><small>Faro</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/campfire.svg" data-name="Hoguera" data-description="Campamento con hoguera." title="Campfire — game-icons.net CC BY"><img src="assets/game-icons/campfire.svg" alt=""><small>Hoguera</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/ruin.svg" data-name="Ruinas" data-description="Ruinas antiguas de civilización perdida." title="Ruins — game-icons.net CC BY"><img src="assets/game-icons/ruin.svg" alt=""><small>Ruinas</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/mountain.svg" data-name="Montaña" data-description="Cadena montañosa o pico aislado." title="Mountain — game-icons.net CC BY"><img src="assets/game-icons/mountain.svg" alt=""><small>Montaña</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/dragon-head.svg" data-name="Guarida Dragón" data-description="Territorio de un dragón. Zona de máximo peligro." title="Dragon Head — game-icons.net CC BY"><img src="assets/game-icons/dragon-head.svg" alt=""><small>Dragón</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/sword.svg" data-name="Combate" data-description="Zona de combate o campo de batalla." title="Sword — game-icons.net CC BY"><img src="assets/game-icons/sword.svg" alt=""><small>Batalla</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/scroll.svg" data-name="Misión" data-description="Punto de misión o historia importante." title="Scroll — game-icons.net CC BY"><img src="assets/game-icons/scroll.svg" alt=""><small>Misión</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/torch.svg" data-name="Punto de Luz" data-description="Fuente de luz en la oscuridad." title="Torch — game-icons.net CC BY"><img src="assets/game-icons/torch.svg" alt=""><small>Antorcha</small></div>
+                                <div class="stamp-item game-icon" data-image="assets/game-icons/door.svg" data-name="Puerta Secreta" data-description="Pasaje oculto o puerta secreta." title="Door — game-icons.net CC BY"><img src="assets/game-icons/door.svg" alt=""><small>Puerta S.</small></div>
+                            </div>
+                        </div>
+
+                        <!-- TAB CONTENT: MIT SYMBOLS FROM AZGAAR -->
+                        <div class="tab-content" id="tabSymbols">
+                            <div class="stamps-grid symbols-grid">
+                                <div class="stamp-item" data-image="assets/azgaar-charges/castle.svg" data-name="Castillo" data-description="Fortaleza, capital o plaza fuerte regional." title="Azgaar MIT: Castillo"><img src="assets/azgaar-charges/castle.svg" alt=""><small>Castillo</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/tower.svg" data-name="Torre" data-description="Atalaya, torre de magos o puesto de vigilancia." title="Azgaar MIT: Torre"><img src="assets/azgaar-charges/tower.svg" alt=""><small>Torre</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/bridge.svg" data-name="Puente" data-description="Paso clave sobre río, barranco o frontera." title="Azgaar MIT: Puente"><img src="assets/azgaar-charges/bridge.svg" alt=""><small>Puente</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/anchor.svg" data-name="Puerto" data-description="Muelle, bahía segura o enclave naval." title="Azgaar MIT: Puerto"><img src="assets/azgaar-charges/anchor.svg" alt=""><small>Puerto</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/caravel.svg" data-name="Barco" data-description="Navío mercante, expedición o amenaza en ruta." title="Azgaar MIT: Barco"><img src="assets/azgaar-charges/caravel.svg" alt=""><small>Barco</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/compassRose.svg" data-name="Cruce de rutas" data-description="Punto de decisión, cruce comercial o marcador de viaje." title="Azgaar MIT: Brújula"><img src="assets/azgaar-charges/compassRose.svg" alt=""><small>Cruce</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/banner.svg" data-name="Campamento" data-description="Campamento militar, caravana detenida o territorio reclamado." title="Azgaar MIT: Estandarte"><img src="assets/azgaar-charges/banner.svg" alt=""><small>Camp.</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/crown.svg" data-name="Corte" data-description="Sede noble, audiencia real o centro de poder." title="Azgaar MIT: Corona"><img src="assets/azgaar-charges/crown.svg" alt=""><small>Corte</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/chalice.svg" data-name="Santuario" data-description="Santuario, templo menor o reliquia protegida." title="Azgaar MIT: Cáliz"><img src="assets/azgaar-charges/chalice.svg" alt=""><small>Sant.</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/bookOpen.svg" data-name="Archivo" data-description="Biblioteca, archivo prohibido o escuela arcana." title="Azgaar MIT: Libro abierto"><img src="assets/azgaar-charges/bookOpen.svg" alt=""><small>Archivo</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/key.svg" data-name="Llave" data-description="Llave de misión, acceso bloqueado o pista importante." title="Azgaar MIT: Llave"><img src="assets/azgaar-charges/key.svg" alt=""><small>Llave</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/skull.svg" data-name="Peligro" data-description="Territorio mortal, guarida o advertencia de amenaza." title="Azgaar MIT: Calavera"><img src="assets/azgaar-charges/skull.svg" alt=""><small>Peligro</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/dragonRampant.svg" data-name="Guarida dracónica" data-description="Rumor de dragón, zona de tributo o guarida mayor." title="Azgaar MIT: Dragón"><img src="assets/azgaar-charges/dragonRampant.svg" alt=""><small>Dragón</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/sword.svg" data-name="Batalla" data-description="Campo de batalla, duelo pendiente o frontera militarizada." title="Azgaar MIT: Espada"><img src="assets/azgaar-charges/sword.svg" alt=""><small>Batalla</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/anvil.svg" data-name="Forja" data-description="Forja, herrería enana o taller de artefactos." title="Azgaar MIT: Yunque"><img src="assets/azgaar-charges/anvil.svg" alt=""><small>Forja</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/wheel.svg" data-name="Molino" data-description="Molino, ingeniería local o infraestructura importante." title="Azgaar MIT: Rueda"><img src="assets/azgaar-charges/wheel.svg" alt=""><small>Molino</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/tree.svg" data-name="Árbol antiguo" data-description="Árbol sagrado, claro druídico o corazón del bosque." title="Azgaar MIT: Árbol"><img src="assets/azgaar-charges/tree.svg" alt=""><small>Árbol</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/horsePassant.svg" data-name="Posta" data-description="Posta de caballos, establo de ruta o relevo de mensajeros." title="Azgaar MIT: Caballo"><img src="assets/azgaar-charges/horsePassant.svg" alt=""><small>Posta</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/castle2.svg" data-name="Fortín" data-description="Fuerte menor, torre fronteriza o guarnición aislada." title="Azgaar MIT: Fortín"><img src="assets/azgaar-charges/castle2.svg" alt=""><small>Fortín</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/bridge2.svg" data-name="Paso elevado" data-description="Puente secundario, acueducto o paso escondido." title="Azgaar MIT: Puente 2"><img src="assets/azgaar-charges/bridge2.svg" alt=""><small>Paso</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/arbalest.svg" data-name="Bastión" data-description="Defensa pesada, puesto de asedio o armería militar." title="Azgaar MIT: Ballesta"><img src="assets/azgaar-charges/arbalest.svg" alt=""><small>Bastión</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/archer.svg" data-name="Puesto de arqueros" data-description="Emboscada, torre de guardabosques o campo de entrenamiento." title="Azgaar MIT: Arquero"><img src="assets/azgaar-charges/archer.svg" alt=""><small>Arqueros</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/arrow.svg" data-name="Señal de ruta" data-description="Marcador de dirección, pista de persecución o señal antigua." title="Azgaar MIT: Flecha"><img src="assets/azgaar-charges/arrow.svg" alt=""><small>Señal</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/axe.svg" data-name="Campamento leñador" data-description="Tala, aserradero o frontera de explotación forestal." title="Azgaar MIT: Hacha"><img src="assets/azgaar-charges/axe.svg" alt=""><small>Leñador</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/bell.svg" data-name="Campanario" data-description="Pueblo, alarma de frontera o torre de aviso." title="Azgaar MIT: Campana"><img src="assets/azgaar-charges/bell.svg" alt=""><small>Campana</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/bone.svg" data-name="Restos" data-description="Zona de restos, antiguo combate o advertencia natural." title="Azgaar MIT: Hueso"><img src="assets/azgaar-charges/bone.svg" alt=""><small>Restos</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/bookClosed.svg" data-name="Tomo sellado" data-description="Libro de misión, archivo cerrado o pista arcana." title="Azgaar MIT: Libro cerrado"><img src="assets/azgaar-charges/bookClosed.svg" alt=""><small>Tomo</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/bucket.svg" data-name="Pozo" data-description="Pozo, cisterna o recurso de agua disputado." title="Azgaar MIT: Cubo"><img src="assets/azgaar-charges/bucket.svg" alt=""><small>Pozo</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/cannon.svg" data-name="Batería" data-description="Artillería, ruina militar o defensa costera." title="Azgaar MIT: Cañón"><img src="assets/azgaar-charges/cannon.svg" alt=""><small>Batería</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/chain.svg" data-name="Prisión" data-description="Prisión, esclavistas, cadena de bloqueo o zona sellada." title="Azgaar MIT: Cadena"><img src="assets/azgaar-charges/chain.svg" alt=""><small>Prisión</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/column.svg" data-name="Ruina clásica" data-description="Columnas antiguas, foro derruido o templo perdido." title="Azgaar MIT: Columna"><img src="assets/azgaar-charges/column.svg" alt=""><small>Columna</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/crescent.svg" data-name="Santuario lunar" data-description="Lugar sagrado nocturno, calendario lunar o culto secreto." title="Azgaar MIT: Media luna"><img src="assets/azgaar-charges/crescent.svg" alt=""><small>Lunar</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/crossCeltic.svg" data-name="Cementerio" data-description="Cementerio viejo, cripta menor o memoria de batalla." title="Azgaar MIT: Cruz"><img src="assets/azgaar-charges/crossCeltic.svg" alt=""><small>Cement.</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/dragonPassant.svg" data-name="Rastro dracónico" data-description="Huellas, frontera de caza o avistamiento reciente." title="Azgaar MIT: Dragón 2"><img src="assets/azgaar-charges/dragonPassant.svg" alt=""><small>Rastro</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/harp.svg" data-name="Posada" data-description="Posada, teatro, salón de bardos o descanso seguro." title="Azgaar MIT: Arpa"><img src="assets/azgaar-charges/harp.svg" alt=""><small>Posada</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/shipWheel.svg" data-name="Capitanía" data-description="Autoridad portuaria, timón maldito o gremio naval." title="Azgaar MIT: Timón"><img src="assets/azgaar-charges/shipWheel.svg" alt=""><small>Timón</small></div>
+                                <div class="stamp-item" data-image="assets/azgaar-charges/spear.svg" data-name="Puesto tribal" data-description="Puesto de cazadores, guardia tribal o frontera hostil." title="Azgaar MIT: Lanza"><img src="assets/azgaar-charges/spear.svg" alt=""><small>Lanza</small></div>
+                            </div>
+                        </div>
+
+                        <!-- SELECTED STAMP OPTIONS (TOKEN CONFIGURATION) -->
+                        <div class="selected-stamp-controls" id="stampEditControls" style="display: none;">
+                            <h4>Objeto Seleccionado</h4>
+                            <div class="setting-item">
+                                <label>Nombre:</label>
+                                <input type="text" id="tokenName" placeholder="Nombre..." style="background: rgba(0,0,0,0.35); border: 1px solid var(--border); color: var(--text); padding: 4px 8px; border-radius: 4px; font-family: var(--font-ui); width: 140px;">
+                            </div>
+                            <div class="setting-item">
+                                <label>Tamaño:</label>
+                                <input type="range" id="stampSize" min="0.5" max="3" step="0.1" value="1">
+                                <span id="stampSizeVal">1.0x</span>
+                            </div>
+                            <div class="setting-item">
+                                <label>Rotación:</label>
+                                <input type="range" id="stampRotation" min="0" max="360" step="15" value="0">
+                                <span id="stampRotationVal">0°</span>
+                            </div>
+                            <div class="setting-item">
+                                <label>Ocultar a jugadores:</label>
+                                <input type="checkbox" id="tokenIsSecret" style="accent-color: var(--primary); width:16px; height:16px;">
+                            </div>
+                            <div class="setting-item" id="tokenDescriptionSetting" style="display: none; flex-direction: column; align-items: flex-start; gap: 6px;">
+                                <label style="font-weight: 600;">Descripción / Lore:</label>
+                                <textarea id="tokenDescription" placeholder="Lore o descripción del lugar..." style="width: 100%; height: 80px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); color: var(--text); padding: 6px; border-radius: 4px; font-family: var(--font-ui); font-size: 11px; resize: vertical; box-sizing: border-box;"></textarea>
+                            </div>
+                            <div class="setting-item" id="tokenShowDescSetting" style="display: none;">
+                                <label for="tokenShowDescToPlayers">Mostrar a jugadores:</label>
+                                <input type="checkbox" id="tokenShowDescToPlayers" style="accent-color: var(--primary); width:16px; height:16px;">
+                            </div>
+                            <div class="divider-horizontal" style="margin: 10px 0;"></div>
+                            
+                            <!-- TOKEN RULES -->
+                            <div class="setting-item">
+                                <label>Ficha D&D:</label>
+                                <select id="tokenType">
+                                    <option value="prop">Elemento / Decorado</option>
+                                    <option value="hero">🟢 Héroe (Revela Niebla)</option>
+                                    <option value="monster">🔴 Monstruo / PNJ</option>
+                                </select>
+                            </div>
+                            <div class="setting-item" id="visionRadiusSetting" style="display: none;">
+                                <label>Rango Visión:</label>
+                                <input type="range" id="tokenVision" min="1" max="15" value="4">
+                                <span id="tokenVisionVal">4c</span>
+                            </div>
+
+                            <!-- HP SETTING -->
+                            <div class="setting-item" id="tokenHpSetting" style="display: none;">
+                                <label>Puntos de Vida (HP):</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="tokenHpCurrent" placeholder="Act" style="width: 55px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); color: var(--text); padding: 4px; border-radius: 4px; text-align: center; font-family: var(--font-ui);">
+                                    <span style="width: auto; text-align: center; color: var(--text-muted);">/</span>
+                                    <input type="number" id="tokenHpMax" placeholder="Máx" style="width: 55px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); color: var(--text); padding: 4px; border-radius: 4px; text-align: center; font-family: var(--font-ui);">
+                                </div>
+                            </div>
+
+                            <!-- CONDITIONS SETTING -->
+                            <div class="setting-item" id="tokenConditionsSetting" style="display: none; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 10px;">
+                                <label style="font-weight: 600;">Condiciones:</label>
+                                <div class="conditions-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%;">
+                                    <label style="font-size: 10px; display: flex; align-items: center; gap: 3px; cursor: pointer; color: var(--text-muted);">
+                                        <input type="checkbox" class="condition-chk" value="dead" style="width:12px; height:12px;"> 💀 Muerto
+                                    </label>
+                                    <label style="font-size: 10px; display: flex; align-items: center; gap: 3px; cursor: pointer; color: var(--text-muted);">
+                                        <input type="checkbox" class="condition-chk" value="burning" style="width:12px; height:12px;"> 🔥 Fuego
+                                    </label>
+                                    <label style="font-size: 10px; display: flex; align-items: center; gap: 3px; cursor: pointer; color: var(--text-muted);">
+                                        <input type="checkbox" class="condition-chk" value="unconscious" style="width:12px; height:12px;"> 💤 Sueño
+                                    </label>
+                                    <label style="font-size: 10px; display: flex; align-items: center; gap: 3px; cursor: pointer; color: var(--text-muted);">
+                                        <input type="checkbox" class="condition-chk" value="blessed" style="width:12px; height:12px;"> 🛡️ Bendito
+                                    </label>
+                                    <label style="font-size: 10px; display: flex; align-items: center; gap: 3px; cursor: pointer; color: var(--text-muted);">
+                                        <input type="checkbox" class="condition-chk" value="poisoned" style="width:12px; height:12px;"> 🧪 Enven.
+                                    </label>
+                                    <label style="font-size: 10px; display: flex; align-items: center; gap: 3px; cursor: pointer; color: var(--text-muted);">
+                                        <input type="checkbox" class="condition-chk" value="stunned" style="width:12px; height:12px;"> 😵 Aturdid.
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-secondary btn-small" id="btnAddToInitiative" style="width: 100%; margin-top: 10px;">⚔️ Añadir a Iniciativa</button>
+                            
+                            <div class="btn-group" style="margin-top: 10px;">
+                                <button class="btn btn-danger btn-small" id="btnDeleteStamp">Eliminar</button>
+                                <button class="btn btn-secondary btn-small" id="btnDuplicateStamp">Duplicar</button>
+                            </div>
+                        </div>
+                        <div class="custom-avatar-uploader" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                            <h4 style="font-size: 11px; text-transform: uppercase; color: var(--primary); letter-spacing: 0.5px; margin-bottom: 8px;">+ Subir Ficha Personalizada</h4>
+                            <div class="setting-item" style="margin-top: 6px;">
+                                <label style="font-size: 11px; color: var(--text-muted);">Avatar:</label>
+                                <label class="btn btn-secondary btn-small" style="margin: 0; padding: 4px 8px;">
+                                    🖼️ Cargar Imagen
+                                    <input type="file" id="customAvatarInput" accept="image/*" style="display: none;">
+                                </label>
+                            </div>
+                            <div id="customAvatarPreview" style="display:none; text-align: center; margin: 10px 0;">
+                                <img src="" id="imgAvatarPrev" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); object-fit: cover;">
+                            </div>
+                            <div class="setting-item" id="customAvatarNameGroup" style="display:none; margin-top: 6px;">
+                                <label style="font-size: 11px; color: var(--text-muted);">Nombre:</label>
+                                <input type="text" id="customAvatarName" placeholder="Nombre..." style="width: 140px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); color: var(--text); padding: 4px 8px; border-radius: 4px; font-family: var(--font-ui); font-size: 12px;">
+                            </div>
+                            <div class="setting-item" id="customAvatarTypeGroup" style="display:none; margin-top: 6px;">
+                                <label style="font-size: 11px; color: var(--text-muted);">Tipo:</label>
+                                <select id="customAvatarType" style="min-width: 140px;">
+                                    <option value="hero">🟢 Héroe</option>
+                                    <option value="monster">🔴 Monstruo</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary btn-small" id="btnCreateCustomToken" style="width: 100%; display:none; margin-top: 10px;">Crear Ficha</button>
+                        </div>
+                        <p class="help-text">💡 Haz clic en un objeto y luego en el mapa para colocarlo. Selecciónalo para moverlo, rotarlo (R) o transformarlo en Héroe para revelar niebla.</p>
+                    </div>
+
+                    <!-- OPTIONS: FOG OF WAR -->
+                    <div class="options-group" id="optionsFog" style="display: none;">
+                        <h3>Niebla de Guerra</h3>
+                        <div class="btn-group">
+                            <button class="btn active" id="btnFogAdd">Añadir Niebla</button>
+                            <button class="btn" id="btnFogRemove">Revelar Terreno</button>
+                        </div>
+                        <div class="btn-group" style="margin-top: 10px;">
+                            <button class="btn btn-secondary btn-small" id="btnFogAll">Cubrir Todo</button>
+                            <button class="btn btn-secondary btn-small" id="btnFogClear">Revelar Todo</button>
+                        </div>
+                        
+                        <div class="divider-horizontal" style="margin: 15px 0;"></div>
+                        
+                        <div class="setting-item">
+                            <label for="chkDynamicFog" style="font-weight: 600; color: var(--primary);">Niebla Dinámica (Visión):</label>
+                            <input type="checkbox" id="chkDynamicFog" checked>
+                        </div>
+                        <p class="help-text">💡 La niebla dinámica hace que las fichas marcadas como **Héroe** revelen automáticamente la zona a su alrededor (según su rango de visión) mientras las mueves.</p>
+                    </div>
+
+                    <!-- OPTIONS: PAN/NAVIGATE (DEFAULT) -->
+                    <div class="options-group" id="optionsPan">
+                        <h3>Navegación</h3>
+                        <p class="help-text">Arrastra el lienzo con el ratón para moverte por el mapa. Utiliza la rueda del ratón para hacer zoom.</p>
+                        <div class="divider-horizontal"></div>
+                        <h3>Configuración de Rejilla</h3>
+                        <div class="setting-item">
+                            <label>Columnas:</label>
+                            <input type="number" id="gridCols" min="5" max="80" value="25">
+                        </div>
+                        <div class="setting-item">
+                            <label>Filas:</label>
+                            <input type="number" id="gridRows" min="5" max="80" value="20">
+                        </div>
+                        <button class="btn btn-primary" id="btnApplyGridSize" style="width: 100%; margin-top: 10px;">Aplicar Tamaño</button>
+                        
+                        <div class="setting-item" style="margin-top: 15px;">
+                            <label for="chkShowGrid">Mostrar Rejilla:</label>
+                            <input type="checkbox" id="chkShowGrid" checked>
+                        </div>
+                        <div class="divider-horizontal"></div>
+                        <h3>Tiempo de Viaje (Exploración)</h3>
+                        <div class="setting-item">
+                            <label for="travelScaleValue">Escala (1 hex =):</label>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <input type="number" id="travelScaleValue" value="10" style="width: 55px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); color: var(--text); padding: 4px; border-radius: 4px; text-align: center; font-family: var(--font-ui);">
+                                <select id="travelScaleUnit" style="width: 80px;">
+                                    <option value="millas" selected>Millas</option>
+                                    <option value="km">km</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label for="travelMethodSelect">Método de Viaje:</label>
+                            <select id="travelMethodSelect" style="min-width: 140px;">
+                                <option value="foot" selected>🚶 A pie (24 mi / 40 km día)</option>
+                                <option value="horse">🐎 A caballo (32 mi / 50 km día)</option>
+                                <option value="wagon">🛒 Carreta (16 mi / 25 km día)</option>
+                                <option value="ship">⛵ Barco (48 mi / 80 km día)</option>
+                                <option value="flying">🦅 Volando (80 mi / 130 km día)</option>
+                            </select>
+                        </div>
+                        <div class="divider-horizontal"></div>
+                        <h3>Mapa de Fondo</h3>
+                        <div class="setting-item">
+                            <label for="chkShowBg">Mostrar Fondo:</label>
+                            <input type="checkbox" id="chkShowBg">
+                        </div>
+                        <div class="setting-item">
+                            <label for="weatherSelect">Efecto Clima:</label>
+                            <select id="weatherSelect" style="min-width: 140px;">
+                                <option value="" selected>Ninguno ☀️</option>
+                                <option value="rain">Lluvia 🌧️</option>
+                                <option value="snow">Nieve ❄️</option>
+                                <option value="fog">Niebla/Bruma 🌫️</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>Cargar Imagen:</label>
+                            <label class="btn btn-secondary btn-small" style="margin: 0; padding: 4px 8px;">
+                                📁 Subir Mapa
+                                <input type="file" id="bgImageInput" accept="image/*" style="display: none;">
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label for="bgTemplateSelect">Fondo Defecto:</label>
+                            <select id="bgTemplateSelect" style="min-width: 140px;">
+                                <option value="" selected>Ninguno</option>
+                                <option value="fantasy_bg">Paisaje Fantástico 🏔️</option>
+                                <option value="forest">Claro del Bosque 🌳</option>
+                                <option value="lava">Foso de Lava 🌋</option>
+                                <option value="local-winter-camp">Ciudad Nevada (canal) ❄️</option>
+                                <option value="local-snowy-city">Ciudad Nevada (barrios) 🏘️</option>
+                                <option value="local-winter-outpost">Puesto Invernal 🏔️</option>
+                                <option value="local-summer-town">Villa de Verano 🌿</option>
+                                <option value="local-night-roofs-1">Aldea Nocturna 1 🌙</option>
+                                <option value="local-night-roofs-2">Aldea Nocturna 2 🌙</option>
+                                <option value="local-lake-village">Pueblo del Lago 🚣</option>
+                                <option value="local-icy-cavern">Caverna Helada 🧊</option>
+                                <option value="local-city-snow">Ciudad Invernal 🏙️</option>
+                                <option value="local-village-blocks">Villa Cuadriculada 🗺️</option>
+                                <option value="local-sketch">Boceto Táctico 📐</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>Opacidad:</label>
+                            <input type="range" id="bgOpacity" min="0.1" max="1.0" step="0.05" value="0.8">
+                            <span id="bgOpacityVal" style="width: 45px;">80%</span>
+                        </div>
+                        <div class="setting-item">
+                            <label>Escala:</label>
+                            <input type="range" id="bgScale" min="0.2" max="3.0" step="0.05" value="1.0">
+                            <span id="bgScaleVal" style="width: 45px;">1.0x</span>
+                        </div>
+                        <div class="setting-item">
+                            <label>Desplazar X:</label>
+                            <input type="range" id="bgX" min="-800" max="800" step="10" value="0">
+                            <span id="bgXVal" style="width: 45px;">0px</span>
+                        </div>
+                        <div class="setting-item">
+                            <label>Desplazar Y:</label>
+                            <input type="range" id="bgY" min="-800" max="800" step="10" value="0">
+                            <span id="bgYVal" style="width: 45px;">0px</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SIDEBAR FOOTER (WITH DICE ROLLER & INITIATIVE) -->
+                <div class="sidebar-footer">
+                    <!-- INITIATIVE TRACKER WIDGET -->
+                    <div class="initiative-tracker">
+                        <div class="tracker-header">
+                            <h4>⚔️ Iniciativa</h4>
+                            <div class="tracker-actions">
+                                <button id="btnInitNext" class="btn btn-primary btn-small" title="Siguiente Turno">Siguiente ➡️</button>
+                                <button id="btnInitClear" class="btn btn-secondary btn-small" title="Limpiar iniciativa" style="padding: 2px 6px;">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="initiative-list" id="initiativeList">
+                            <div class="init-placeholder">Sin combate activo...</div>
+                        </div>
+                        <div class="initiative-add-form">
+                            <input type="text" id="initAddName" placeholder="Nombre..." class="input-text-small" style="flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--text); padding: 4px; border-radius: 4px; font-family: var(--font-ui); font-size: 11px;">
+                            <input type="number" id="initAddValue" placeholder="Ini" min="-10" max="40" class="input-number-small" style="width: 45px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--text); padding: 4px; border-radius: 4px; text-align: center; font-family: var(--font-ui); font-size: 11px;">
+                            <button id="btnInitAdd" class="btn btn-secondary btn-small" style="padding: 4px 8px;">+</button>
+                        </div>
+                    </div>
+
+                    <!-- DICE ROLLER WIDGET -->
+                    <div class="dice-roller">
+                        <h4>🎲 Lanzador de Dados</h4>
+                        <div class="dice-grid">
+                            <button class="dice-btn" data-die="4">d4</button>
+                            <button class="dice-btn" data-die="6">d6</button>
+                            <button class="dice-btn" data-die="8">d8</button>
+                            <button class="dice-btn" data-die="10">d10</button>
+                            <button class="dice-btn" data-die="12">d12</button>
+                            <button class="dice-btn" data-die="20">d20</button>
+                            <button class="dice-btn" data-die="100">d100</button>
+                        </div>
+                        <div class="dice-console" id="diceConsole">
+                            <div class="roll-placeholder">Selecciona un dado...</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary" id="btnOpenHelp" style="width:100%; margin-top: 15px;">❓ Atajos & Ayuda</button>
+                    <button class="btn btn-danger" id="btnClearMap" style="width:100%; margin-top: 8px;">🗑️ Limpiar Mapa</button>
+                </div>
+            </aside>
+
+            <!-- WORKSPACE (CANVAS VIEWPORT) -->
+            <main class="workspace" id="canvasViewport">
+                <canvas id="mapCanvas"></canvas>
+                <!-- LANDMARK INFO POPUP (visible in player mode / region maps) -->
+                <div id="landmarkPopup" class="landmark-popup" style="display:none;" role="dialog" aria-label="Información del lugar">
+                    <button class="landmark-popup-close" id="closeLandmarkPopup" title="Cerrar">×</button>
+                    <div class="landmark-popup-header">
+                        <span class="landmark-popup-icon" id="landmarkPopupIcon"></span>
+                        <h3 class="landmark-popup-name" id="landmarkPopupName"></h3>
+                    </div>
+                    <div class="landmark-popup-divider"></div>
+                    <p class="landmark-popup-desc" id="landmarkPopupDesc"></p>
+                </div>
+            </main>
+
+            <!-- RIGHT SIDEBAR (CAMPAIGN & TOOLS) -->
+            <aside class="sidebar-right" id="rightPanel">
+                <!-- Toggle handle button -->
+                <button id="btnToggleRightPanel" class="toggle-right-btn" title="Alternar panel de campaña">◀</button>
+                
+                <div class="right-panel-container">
+                    <!-- Tabs Header -->
+                    <div class="right-tabs">
+                        <button class="right-tab-btn active" data-tab="tabIaMaster" title="IA Dungeon Master">🤖 IA</button>
+                        <button class="right-tab-btn" data-tab="tabEncounter" title="Generador de Encuentros">⚔️ Encuentro</button>
+                        <button class="right-tab-btn" data-tab="tabCompendium" title="Compendio D&D 5e">📖 Bestiario</button>
+                        <button class="right-tab-btn" data-tab="tabNotes" title="Notas de Campaña">📝 Notas</button>
+                        <button class="right-tab-btn" data-tab="tabLibrary" title="Biblioteca de Mapas">📁 Mapas</button>
+                    </div>
+                    
+                    <div class="right-panel-content">
+                        <!-- TAB: IA MASTER -->
+                        <div class="right-tab-content active" id="tabIaMaster">
+                            <div class="ai-chat-container">
+                                <div class="ai-chat-header">
+                                    <span>Narrador D&D (Ollama / Local)</span>
+                                    <select id="aiModelSelect" title="Seleccionar modelo">
+                                        <option value="simulated" selected>Simulación 🎭</option>
+                                        <option value="llama3">llama3</option>
+                                        <option value="gemma2">gemma2</option>
+                                        <option value="mistral">mistral</option>
+                                    </select>
+                                </div>
+                                <div class="ai-chat-messages" id="aiChatMessages">
+                                    <div class="ai-msg bot">
+                                        <span class="sender">Dungeon Master:</span> Saludos, aventurero. Estoy listo para narrar tu historia. Puedes pedirme descripciones de zonas, encuentros o reglas.
+                                    </div>
+                                </div>
+                                <div class="ai-prompt-shortcuts">
+                                    <button class="shortcut-btn" data-prompt="Describe la zona actual del mapa con detalle poético y misterioso para los jugadores.">📜 Describir Zona</button>
+                                    <button class="shortcut-btn" data-prompt="Sugiere un encuentro de combate equilibrado para 4 jugadores de nivel 3 en este entorno.">⚔️ Sugerir Encuentro</button>
+                                    <button class="shortcut-btn" data-prompt="Explícame cómo funcionan las reglas de cobertura y sigilo en D&D 5e.">📖 Reglas Cobertura</button>
+                                </div>
+                                <div class="ai-chat-input-wrapper">
+                                    <input type="text" id="aiChatInput" placeholder="Pregunta al Dungeon Master...">
+                                    <button id="btnAiChatSend" class="btn btn-primary btn-small">Enviar</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- TAB: ENCOUNTER GENERATOR -->
+                        <div class="right-tab-content" id="tabEncounter">
+                            <div class="encounter-generator">
+                                <h3 style="font-family:var(--font-heading);color:var(--primary);font-size:13px;margin-bottom:12px;letter-spacing:1px;">GENERADOR DE ENCUENTROS</h3>
+
+                                <div class="enc-row">
+                                    <label>Nivel del grupo</label>
+                                    <select id="encPartyLevel">
+                                        <option value="1">Nivel 1</option><option value="2">Nivel 2</option><option value="3">Nivel 3</option>
+                                        <option value="4">Nivel 4</option><option value="5" selected>Nivel 5</option><option value="6">Nivel 6</option>
+                                        <option value="7">Nivel 7</option><option value="8">Nivel 8</option><option value="9">Nivel 9</option>
+                                        <option value="10">Nivel 10</option><option value="12">Nivel 12</option><option value="15">Nivel 15</option>
+                                        <option value="18">Nivel 18</option><option value="20">Nivel 20</option>
+                                    </select>
+                                </div>
+                                <div class="enc-row">
+                                    <label>Jugadores</label>
+                                    <select id="encPartySize">
+                                        <option value="2">2 jugadores</option><option value="3">3 jugadores</option>
+                                        <option value="4" selected>4 jugadores</option><option value="5">5 jugadores</option><option value="6">6 jugadores</option>
+                                    </select>
+                                </div>
+                                <div class="enc-row">
+                                    <label>Dificultad</label>
+                                    <select id="encDifficulty">
+                                        <option value="easy">Fácil</option>
+                                        <option value="medium" selected>Media</option>
+                                        <option value="hard">Dura</option>
+                                        <option value="deadly">Mortal</option>
+                                    </select>
+                                </div>
+                                <div class="enc-row">
+                                    <label>Terreno</label>
+                                    <select id="encTerrain">
+                                        <option value="any" selected>Cualquiera</option>
+                                        <option value="forest">Bosque / Jungla</option>
+                                        <option value="dungeon">Mazmorra / Cripta</option>
+                                        <option value="plains">Llanuras / Colinas</option>
+                                        <option value="swamp">Pantano / Río</option>
+                                        <option value="mountain">Montañas / Cueva</option>
+                                        <option value="coast">Costa / Mar</option>
+                                        <option value="desert">Desierto</option>
+                                        <option value="arctic">Ártico / Nieve</option>
+                                        <option value="urban">Ciudad / Interior</option>
+                                    </select>
+                                </div>
+                                <div class="enc-row">
+                                    <label>Tipo</label>
+                                    <select id="encMonsterType">
+                                        <option value="any" selected>Cualquier tipo</option>
+                                        <option value="humanoid">Humanoide</option>
+                                        <option value="undead">No-muerto</option>
+                                        <option value="beast">Bestia</option>
+                                        <option value="dragon">Dragón</option>
+                                        <option value="fiend">Infernal</option>
+                                        <option value="monstrosity">Monstruosidad</option>
+                                        <option value="elemental">Elemental</option>
+                                        <option value="fey">Feérico</option>
+                                    </select>
+                                </div>
+
+                                <button class="btn btn-primary" id="btnGenerateEncounter" style="width:100%;margin:12px 0 8px;">🎲 Generar Encuentro</button>
+
+                                <div id="encounterResult" style="display:none;">
+                                    <div id="encounterHeader" style="margin-bottom:8px;"></div>
+                                    <div id="encounterMonsterList"></div>
+                                    <button class="btn btn-secondary btn-small" id="btnSpawnEncounter" style="width:100%;margin-top:10px;">🗺️ Invocar en el Mapa</button>
+                                    <button class="btn btn-secondary btn-small" id="btnRerollEncounter" style="width:100%;margin-top:6px;">🔄 Otro Encuentro</button>
+                                </div>
+                                <div id="encounterEmpty" style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px 0;">
+                                    Configura los parámetros y pulsa Generar para crear un encuentro balanceado.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: COMPENDIUM -->
+                        <div class="right-tab-content" id="tabCompendium">
+                            <div class="compendium-container">
+                                <div class="search-bar">
+                                    <input type="text" id="compendiumSearch" placeholder="Buscar en D&D 5e (ej. Goblin, Fireball)...">
+                                    <select id="compendiumFilter" title="Filtrar por tipo">
+                                        <option value="monsters">🔴 Monstruos</option>
+                                        <option value="spells">🔮 Conjuros</option>
+                                        <option value="magic-items">✨ Objetos M.</option>
+                                    </select>
+                                </div>
+                                <div class="compendium-results-wrapper">
+                                    <div class="compendium-results" id="compendiumResults">
+                                        <div class="compendium-placeholder">Escribe algo para buscar en las reglas de D&D 5e...</div>
+                                    </div>
+                                    <div class="compendium-detail" id="compendiumDetail" style="display: none;">
+                                        <button id="btnBackToResults" class="btn btn-secondary btn-small" style="margin-bottom: 10px;">⬅️ Volver a resultados</button>
+                                        <div id="compendiumDetailContent"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- TAB: CAMPAIGN NOTES -->
+                        <div class="right-tab-content" id="tabNotes">
+                            <div class="notes-container">
+                                <textarea id="campaignNotes" placeholder="Escribe aquí las notas de tu sesión de D&D... (Se guarda automáticamente al escribir)"></textarea>
+                                <div class="notes-footer">
+                                    <span id="notesSaveStatus">Nota guardada localmente</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- TAB: LOCAL LIBRARY -->
+                        <div class="right-tab-content" id="tabLibrary">
+                            <div class="library-container">
+                                <div class="library-save-form">
+                                    <input type="text" id="libSaveName" placeholder="Nombre para guardar mapa...">
+                                    <button id="btnLibSave" class="btn btn-primary btn-small">💾 Guardar</button>
+                                </div>
+                                <div class="library-list" id="libraryList">
+                                    <div class="lib-placeholder">No hay mapas guardados en el navegador...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- HELP MODAL -->
+        <div class="modal-overlay" id="helpModal">
+            <div class="modal">
+                <header class="modal-header">
+                    <h2>Controles & Atajos de Teclado</h2>
+                    <button class="btn-close" id="btnCloseHelp">×</button>
+                </header>
+                <div class="modal-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Acción</th>
+                                <th>Control del Ratón / Teclado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Moverse por el mapa (Pan)</strong></td>
+                                <td>Mantén pulsado <code>Espacio + arrastrar ratón</code>, o usa el <code>botón derecho + arrastrar</code>.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Hacer Zoom</strong></td>
+                                <td>Usa la <code>Rueda del ratón</code> o los botones ➕ / ➖ en la barra superior.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Pintar continuo (Terreno/Niebla)</strong></td>
+                                <td>Haz <code>clic izquierdo y arrastra</code> por las casillas.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Colocar un Objeto/Ficha</strong></td>
+                                <td>Selecciona un objeto del panel, haz <code>clic izquierdo</code> en el mapa para colocarlo.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Seleccionar / Mover un Objeto</strong></td>
+                                <td>Con la herramienta <strong>Objetos</strong> activa, haz <code>clic izquierdo</code> en un objeto del lienzo para seleccionarlo y arrástralo para moverlo.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Rotar Objeto Seleccionado</strong></td>
+                                <td>Pulsa la tecla <kbd>R</kbd> para girarlo 15° en sentido horario, o usa la barra en el panel.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Eliminar Objeto Seleccionado</strong></td>
+                                <td>Pulsa las teclas <kbd>Supr</kbd> / <kbd>Retroceso</kbd> (Backspace).</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Duplicar Objeto Seleccionado</strong></td>
+                                <td>Pulsa <kbd>Ctrl</kbd> + <kbd>D</kbd> o usa el botón "Duplicar".</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Deshacer / Rehacer acción</strong></td>
+                                <td>Usa <kbd>Ctrl+Z</kbd> para deshacer y <kbd>Ctrl+Y</kbd> para rehacer.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Movimiento libre (Sin rejilla)</strong></td>
+                                <td>Mantén pulsado <kbd>Alt</kbd> mientras arrastras un objeto para posicionarlo con precisión.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <footer class="modal-footer">
+                    <button class="btn btn-primary" id="btnCloseHelpOk">Entendido</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP SCRIPT -->
+    <script src="app.js"></script>
+</body>
+</html>

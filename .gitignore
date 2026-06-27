@@ -1,0 +1,14 @@
+# Large local-only folders (no clear license)
+local-assets/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.swp
+
+# Logs
+*.log
